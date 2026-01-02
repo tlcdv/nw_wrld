@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { Modal } from "../shared/Modal.jsx";
 import { SortableWrapper } from "../shared/SortableWrapper.jsx";
@@ -10,6 +10,7 @@ import { RadioButton, Label } from "../components/FormInputs.js";
 import { updateUserData } from "../core/utils.js";
 import { EditSetModal } from "./EditSetModal.jsx";
 import { ConfirmationModal } from "./ConfirmationModal.jsx";
+import { deleteRecordingsForTracks } from "../../shared/json/recordingUtils.js";
 
 const SortableSetItem = ({
   set,
@@ -38,7 +39,9 @@ const SortableSetItem = ({
           <label
             htmlFor={`set-${set.id}`}
             className={`uppercase cursor-pointer text-[11px] font-mono flex-1 ${
-              activeSetId === set.id ? "text-neutral-300" : "text-neutral-300/30"
+              activeSetId === set.id
+                ? "text-neutral-300"
+                : "text-neutral-300/30"
             }`}
           >
             {set.name} ({set.tracks.length} tracks)
@@ -71,6 +74,8 @@ export const SelectSetModal = ({
   setActiveTrackId,
   activeSetId,
   setActiveSetId,
+  recordingData,
+  setRecordingData,
   onCreateSet,
   onConfirmDelete,
 }) => {
@@ -106,9 +111,17 @@ export const SelectSetModal = ({
     onConfirmDelete(
       `Are you sure you want to delete "${setToDelete.name}"?`,
       () => {
+        const trackIdsToDelete = setToDelete.tracks.map((t) => t.id);
+
         updateUserData(setUserData, (draft) => {
           draft.sets = draft.sets.filter((s) => s.id !== setId);
         });
+
+        if (trackIdsToDelete.length > 0) {
+          setRecordingData((prev) =>
+            deleteRecordingsForTracks(prev, trackIdsToDelete)
+          );
+        }
 
         if (activeSetId === setId) {
           const newSet = sets.find((s) => s.id !== setId);
@@ -186,4 +199,3 @@ export const SelectSetModal = ({
     </>
   );
 };
-

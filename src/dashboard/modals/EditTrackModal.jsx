@@ -4,7 +4,7 @@ import { Modal } from "../shared/Modal.jsx";
 import { ModalHeader } from "../components/ModalHeader.js";
 import { ModalFooter } from "../components/ModalFooter.js";
 import { Button } from "../components/Button.js";
-import { TextInput, Select, Label } from "../components/FormInputs.js";
+import { TextInput, Select, Label, ValidationError } from "../components/FormInputs.js";
 import { HelpIcon } from "../components/HelpIcon.js";
 import { userDataAtom, activeSetIdAtom } from "../core/state.js";
 import { updateActiveSet } from "../core/utils.js";
@@ -86,11 +86,7 @@ export const EditTrackModal = ({
             placeholder="My Performance Track"
             autoFocus
           />
-          {trackName.trim().length > 0 && !validation.isValid && (
-            <div className="text-red-400 text-[11px] mt-1 font-mono">
-              {validation.errorMessage}
-            </div>
-          )}
+          <ValidationError value={trackName} validation={validation} />
         </div>
 
         <div>

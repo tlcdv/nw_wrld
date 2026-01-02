@@ -1,51 +1,23 @@
-import fs from "fs";
-import path from "path";
-
-const getRecordingDataPath = () => {
-  const srcDir = path.join(__dirname, "..", "..");
-  return path.join(srcDir, "shared", "json", "recordingData.json");
-};
+import {
+  loadJsonFile,
+  saveJsonFile,
+  saveJsonFileSync,
+} from "./jsonFileBase.js";
 
 export const loadRecordingData = async () => {
-  const filePath = getRecordingDataPath();
-  try {
-    const data = await fs.promises.readFile(filePath, "utf-8");
-    const parsedData = JSON.parse(data);
-    return parsedData.recordings || {};
-  } catch (error) {
-    console.warn(
-      "Could not load recordingData.json, initializing with empty data.",
-      error
-    );
-    return {};
-  }
+  const data = await loadJsonFile(
+    "recordingData.json",
+    { recordings: {} },
+    "Could not load recordingData.json, initializing with empty data."
+  );
+  return data.recordings || {};
 };
 
-export const saveRecordingData = async (recordings) => {
-  const filePath = getRecordingDataPath();
-  try {
-    await fs.promises.writeFile(
-      filePath,
-      JSON.stringify({ recordings }, null, 2),
-      "utf-8"
-    );
-  } catch (error) {
-    console.error("Error writing recordingData to JSON file:", error);
-  }
-};
+export const saveRecordingData = (recordings) =>
+  saveJsonFile("recordingData.json", { recordings });
 
-export const saveRecordingDataSync = (recordings) => {
-  const filePath = getRecordingDataPath();
-  try {
-    fs.writeFileSync(
-      filePath,
-      JSON.stringify({ recordings }, null, 2),
-      "utf-8"
-    );
-  } catch (error) {
-    console.error("Error writing recordingData to JSON file (sync):", error);
-  }
-};
+export const saveRecordingDataSync = (recordings) =>
+  saveJsonFileSync("recordingData.json", { recordings });
 
 export const getRecordingForTrack = (recordings, trackId) => {
   return recordings[trackId] || { channels: [] };
@@ -70,4 +42,12 @@ export const setSequencerForTrack = (recordings, trackId, sequencer) => {
       sequencer,
     },
   };
+};
+
+export const deleteRecordingsForTracks = (recordings, trackIds) => {
+  const updated = { ...recordings };
+  trackIds.forEach((trackId) => {
+    delete updated[trackId];
+  });
+  return updated;
 };

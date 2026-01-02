@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { Modal } from "../shared/Modal.jsx";
 import { SortableWrapper } from "../shared/SortableWrapper.jsx";
@@ -10,6 +10,7 @@ import { RadioButton, Label } from "../components/FormInputs.js";
 import { updateActiveSet } from "../core/utils.js";
 import { getActiveSetTracks, getActiveSet } from "../../shared/utils/setUtils.js";
 import { EditTrackModal } from "./EditTrackModal.jsx";
+import { deleteRecordingsForTracks } from "../../shared/json/recordingUtils.js";
 
 const SortableTrackItem = ({
   track,
@@ -53,9 +54,9 @@ const SortableTrackItem = ({
           </button>
           <button
             onClick={() => onDelete(trackIndex)}
-        className="text-neutral-500 hover:text-red-500 text-[11px]"
-      >
-        <FaTrash />
+            className="text-neutral-500 hover:text-red-500 text-[11px]"
+          >
+            <FaTrash />
           </button>
         </div>
       )}
@@ -71,6 +72,8 @@ export const SelectTrackModal = ({
   activeTrackId,
   setActiveTrackId,
   activeSetId,
+  recordingData,
+  setRecordingData,
   onCreateTrack,
   onConfirmDelete,
 }) => {
@@ -94,6 +97,10 @@ export const SelectTrackModal = ({
         updateActiveSet(setUserData, activeSetId, (activeSet) => {
           activeSet.tracks.splice(trackIndex, 1);
         });
+
+        setRecordingData((prev) =>
+          deleteRecordingsForTracks(prev, [track.id])
+        );
 
         if (activeTrackId === track.id) {
           const remainingTracks = tracks.filter((t, idx) => idx !== trackIndex);

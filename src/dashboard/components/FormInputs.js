@@ -165,3 +165,13 @@ export const Label = ({ style, children, ...props }) => {
     </div>
   );
 };
+
+export const ValidationError = ({ value, validation }) => {
+  if (value.trim().length === 0 || validation.isValid) return null;
+  
+  return (
+    <div className="text-red-400 text-[11px] mt-1 font-mono">
+      {validation.errorMessage}
+    </div>
+  );
+};

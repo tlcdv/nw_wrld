@@ -1530,6 +1530,8 @@ const Dashboard = () => {
         activeTrackId={activeTrackId}
         setActiveTrackId={setActiveTrackId}
         activeSetId={activeSetId}
+        recordingData={recordingData}
+        setRecordingData={setRecordingData}
         onCreateTrack={() => {
           setIsSelectTrackModalOpen(false);
           setIsCreateTrackOpen(true);
@@ -1545,6 +1547,8 @@ const Dashboard = () => {
         setActiveTrackId={setActiveTrackId}
         activeSetId={activeSetId}
         setActiveSetId={setActiveSetId}
+        recordingData={recordingData}
+        setRecordingData={setRecordingData}
         onCreateSet={() => {
           setIsSelectSetModalOpen(false);
           setIsCreateSetOpen(true);

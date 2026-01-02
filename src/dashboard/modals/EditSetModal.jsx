@@ -4,7 +4,7 @@ import { Modal } from "../shared/Modal.jsx";
 import { ModalHeader } from "../components/ModalHeader.js";
 import { ModalFooter } from "../components/ModalFooter.js";
 import { Button } from "../components/Button.js";
-import { TextInput, Label } from "../components/FormInputs.js";
+import { TextInput, Label, ValidationError } from "../components/FormInputs.js";
 import { userDataAtom } from "../core/state.js";
 import { updateUserData } from "../core/utils.js";
 import { useNameValidation } from "../core/hooks/useNameValidation.js";
@@ -69,11 +69,7 @@ export const EditSetModal = ({ isOpen, onClose, setId, onAlert }) => {
               }
             }}
           />
-          {setName.trim().length > 0 && !validation.isValid && (
-            <div className="text-red-400 text-[11px] mt-1 font-mono">
-              {validation.errorMessage}
-            </div>
-          )}
+          <ValidationError value={setName} validation={validation} />
         </div>
       </div>
 
