@@ -214,23 +214,34 @@ Modules are JavaScript files in your **project's `modules/` folder**. Edit them 
 3. Create or edit a `.js` file
 4. Save → nw_wrld detects changes and reloads
 
-### Using the nwWrldSdk
+### Module File Contract (Docblock + Default Export)
 
-Workspace modules use the global SDK to access functionality and assets:
+Workspace modules are loaded from your project folder and must follow a strict contract:
+
+- **Filename is identity**: `modules/MyModule.js` → module id `MyModule` (must be alphanumeric and start with a letter)
+- **Docblock metadata is required**: `@nwWrld name`, `@nwWrld category`, `@nwWrld imports`
+- **Imports are declarative**: list what you need; nw_wrld injects safe bindings for you
+- **Default export is required**: `export default MyModule`
+
+Allowed `@nwWrld imports`:
+
+- **SDK**: `ModuleBase`, `BaseThreeJsModule`, `assetUrl`, `readText`, `loadJson`
+- **Global libs**: `THREE`, `p5`, `d3`
 
 ```javascript
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: My Module (Display Name)
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, assetUrl, loadJson
+*/
 
 class MyModule extends ModuleBase {
-  static name = "MyModule";
-  static category = "2D";
-
   async init() {
-    // Load images from workspace assets
-    const imgUrl = nwWrldSdk.assetUrl("images/blueprint.png");
+    // Load images from project assets/
+    const imgUrl = assetUrl("images/blueprint.png");
 
-    // Load JSON data from workspace assets
-    const data = await nwWrldSdk.loadJson("json/data.json");
+    // Load JSON data from project assets/
+    const data = await loadJson("json/meteor.json");
   }
 }
 
@@ -388,18 +399,18 @@ These files are managed by the Dashboard and typically don't require manual edit
 
 ## Troubleshooting
 
-| Issue                      | Solution                                                     |
-| -------------------------- | ------------------------------------------------------------ |
-| Project folder missing     | App will prompt to reselect - choose or create a new project |
-| Module doesn't appear      | Check `export default`, verify `static name`, save file      |
-| Module won't load          | Check console for syntax errors, verify SDK usage            |
-| Module hidden              | Trigger `show()` method or set `executeOnLoad: true`         |
-| Asset won't load           | Verify path is relative to `assets/` folder                  |
-| Pattern not playing        | Check that methods are assigned to channels                  |
-| No MIDI detected           | Enable IAC Driver/loopMIDI and verify DAW MIDI output        |
-| Method not triggering      | Verify mapping, check method name match, check console       |
-| Hot reload not working     | Check file is saved in project's `modules/` folder           |
-| App won't start (dev mode) | Close other dev servers (port 9000), run `npm install`       |
+| Issue                      | Solution                                                                                                       |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Project folder missing     | App will prompt to reselect - choose or create a new project                                                   |
+| Module doesn't appear      | Verify filename is `MyModule.js` (letters/numbers only), and docblock includes `@nwWrld name/category/imports` |
+| Module won't load          | Open Projector devtools; check for syntax errors, missing imports, or unknown imports                          |
+| Module hidden              | Trigger `show()` method or set `executeOnLoad: true`                                                           |
+| Asset won't load           | Verify path is relative to `assets/` folder                                                                    |
+| Pattern not playing        | Check that methods are assigned to channels                                                                    |
+| No MIDI detected           | Enable IAC Driver/loopMIDI and verify DAW MIDI output                                                          |
+| Method not triggering      | Verify mapping, check method name match, check console                                                         |
+| Hot reload not working     | Check file is saved in project's `modules/` folder                                                             |
+| App won't start (dev mode) | Close other dev servers (port 9000), run `npm install`                                                         |
 
 ---
 

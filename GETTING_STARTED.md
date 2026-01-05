@@ -252,20 +252,24 @@ MyProject/
 
 ### Loading Assets in Modules
 
-Use the `nwWrldSdk` to load workspace assets:
+Use docblock-declared imports to load project assets:
 
 ```javascript
-// Load an image
-const imageUrl = nwWrldSdk.assetUrl("images/your-image.png");
-if (imageUrl) {
-  this.img.src = imageUrl;
+/*
+@nwWrld name: Asset Demo
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, assetUrl, loadJson
+*/
+
+class AssetDemo extends ModuleBase {
+  async init() {
+    const imageUrl = assetUrl("images/your-image.png");
+    const data = await loadJson("json/your-data.json");
+    // use imageUrl/data...
+  }
 }
 
-// Load JSON data
-const data = await nwWrldSdk.loadJson("json/your-data.json");
-if (data) {
-  // Use the data
-}
+export default AssetDemo;
 ```
 
 ### Example: Using the Image Module

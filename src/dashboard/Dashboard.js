@@ -8,9 +8,6 @@ import React, {
 } from "react";
 import { createRoot } from "react-dom/client";
 import { atom, useAtom } from "jotai";
-import fs from "fs";
-import path from "path";
-import { pathToFileURL } from "url";
 import {
   FaBars,
   FaCog,
@@ -94,24 +91,7 @@ import { SelectTrackModal } from "./modals/SelectTrackModal.jsx";
 import { MethodConfiguratorModal } from "./modals/MethodConfiguratorModal.jsx";
 import { TrackItem } from "./components/track/TrackItem.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-
-const PROJECT_DIR_ARG_PREFIX = "--nwWrldProjectDir=";
-const getProjectDirFromArgv = () => {
-  const arg = (process.argv || []).find((a) =>
-    a.startsWith(PROJECT_DIR_ARG_PREFIX)
-  );
-  if (!arg) return null;
-  const value = arg.slice(PROJECT_DIR_ARG_PREFIX.length);
-  return value || null;
-};
-
-const isExistingDirectory = (dirPath) => {
-  try {
-    return fs.statSync(dirPath).isDirectory();
-  } catch {
-    return false;
-  }
-};
+import { getProjectDir } from "../shared/utils/projectDir.js";
 
 // =========================
 // Components
@@ -677,7 +657,13 @@ const Dashboard = () => {
 
   useIPCListener("from-projector", (event, data) => {
     if (data.type === "debug-log") {
-      const logEntries = data.log.split("\n\n").filter((entry) => entry.trim());
+      const rawLog =
+        typeof data.log === "string"
+          ? data.log
+          : typeof data.props?.log === "string"
+          ? data.props.log
+          : "";
+      const logEntries = rawLog.split("\n\n").filter((entry) => entry.trim());
       setDebugLogs((prev) => {
         const newLogs = [...prev, ...logEntries];
         return newLogs.slice(-200);
@@ -951,6 +937,41 @@ const Dashboard = () => {
     }
   });
 
+  useIPCListener("from-projector", (event, data) => {
+    if (data.type !== "module-introspect-result") return;
+    const payload = data.props || {};
+    const moduleId = payload.moduleId;
+    if (!moduleId) return;
+
+    if (payload.ok) {
+      setPredefinedModules((prev) =>
+        (prev || []).map((m) =>
+          m && m.id === moduleId
+            ? {
+                ...m,
+                methods: Array.isArray(payload.methods) ? payload.methods : [],
+                status: "ready",
+              }
+            : m
+        )
+      );
+      setWorkspaceModuleLoadFailures((prev) =>
+        (prev || []).filter((id) => id !== moduleId)
+      );
+    } else {
+      setWorkspaceModuleLoadFailures((prev) => {
+        const list = Array.isArray(prev) ? prev : [];
+        if (list.includes(moduleId)) return list;
+        return [...list, moduleId];
+      });
+      setPredefinedModules((prev) =>
+        (prev || []).map((m) =>
+          m && m.id === moduleId ? { ...m, status: "failed" } : m
+        )
+      );
+    }
+  });
+
   const ipcInvoke = useIPCInvoke();
 
   const pauseAllPlayback = useCallback(() => {
@@ -978,76 +999,58 @@ const Dashboard = () => {
     const isStale = () => runId !== loadModulesRunIdRef.current;
     try {
       if (isWorkspaceModalOpen) return;
-      const projectDirArg = getProjectDirFromArgv();
+      const projectDirArg = getProjectDir();
       if (!projectDirArg) return;
       if (!workspacePath) return;
-      if (workspacePath) {
-        const modulesDir = path.join(workspacePath, "modules");
-        let entries = [];
-        let hadImportError = false;
-        const loadFailures = new Set();
-        try {
-          entries = await fs.promises.readdir(modulesDir);
-        } catch {
-          entries = [];
+      let summaries = [];
+      try {
+        const bridge = globalThis.nwWrldBridge;
+        if (
+          bridge &&
+          bridge.workspace &&
+          typeof bridge.workspace.listModuleSummaries === "function"
+        ) {
+          summaries = await bridge.workspace.listModuleSummaries();
+        } else {
+          summaries = [];
         }
-        const jsFiles = entries.filter((f) => f.endsWith(".js"));
-        if (isStale()) return;
-        setWorkspaceModuleFiles(
-          jsFiles.map((f) => path.basename(f, ".js")).filter(Boolean)
-        );
-
-        const modules = await Promise.all(
-          jsFiles.map(async (file) => {
-            const fullPath = path.join(modulesDir, file);
-            try {
-              const moduleId = path.basename(file, ".js");
-              if (!/^[A-Za-z][A-Za-z0-9]*$/.test(moduleId)) {
-                console.warn(
-                  `Skipping module ${file}: filename must be alphanumeric and start with a letter.`
-                );
-                return null;
-              }
-              let mtimeMs = Date.now();
-              try {
-                mtimeMs = (await fs.promises.stat(fullPath)).mtimeMs;
-              } catch {}
-              const fileUrl = `${pathToFileURL(fullPath).href}?t=${mtimeMs}`;
-              const imported = await import(/* webpackIgnore: true */ fileUrl);
-              const mod = imported?.default || imported;
-              const displayName =
-                mod?.displayName ||
-                mod?.title ||
-                mod?.label ||
-                mod?.name ||
-                moduleId;
-              return {
-                id: moduleId,
-                name: displayName,
-                category: mod.category || "Undefined",
-                methods: mod.methods || [],
-              };
-            } catch (e) {
-              hadImportError = true;
-              loadFailures.add(path.basename(file, ".js"));
-              console.error(`Error loading workspace module ${file}:`, e);
-              return null;
-            }
-          })
-        );
-
-        const validModules = modules.filter(Boolean);
-        if (isStale()) return;
-        setPredefinedModules(validModules);
-        setWorkspaceModuleLoadFailures(Array.from(loadFailures));
-        setIsProjectorReady(false);
-        if (isStale()) return;
-        sendToProjector("refresh-projector", {});
-        return;
+      } catch {
+        summaries = [];
       }
+      const safeSummaries = Array.isArray(summaries) ? summaries : [];
+      const allModuleIds = safeSummaries
+        .map((s) => (s?.id ? String(s.id) : ""))
+        .filter(Boolean);
+      const listable = safeSummaries.filter((s) => Boolean(s?.hasMetadata));
+      if (isStale()) return;
+      setWorkspaceModuleFiles(allModuleIds);
+
+      const validModules = listable
+        .map((s) => {
+          const moduleId = s?.id ? String(s.id) : "";
+          const name = s?.name ? String(s.name) : "";
+          const category = s?.category ? String(s.category) : "";
+          if (!moduleId || !name || !category) return null;
+          if (!/^[A-Za-z][A-Za-z0-9]*$/.test(moduleId)) return null;
+          return {
+            id: moduleId,
+            name,
+            category,
+            methods: [],
+            status: "uninspected",
+          };
+        })
+        .filter(Boolean);
+      if (isStale()) return;
+      setPredefinedModules(validModules);
+      setWorkspaceModuleLoadFailures([]);
+      setIsProjectorReady(false);
+      if (isStale()) return;
+      sendToProjector("refresh-projector", {});
+      return;
     } catch (error) {
       console.error("❌ [Dashboard] Error loading modules:", error);
-      alert("Failed to load modules from ../projector/modules folder.");
+      alert("Failed to load modules from project folder.");
     }
   }, [isWorkspaceModalOpen, sendToProjector, workspacePath]);
 
@@ -1164,27 +1167,9 @@ const Dashboard = () => {
     [loadModules]
   );
 
-  // Accept HMR updates for modules context so dashboard doesn't full reload
+  // Accept HMR updates for base helpers so dashboard doesn't full reload
   useEffect(() => {
     try {
-      if (workspacePath) return;
-      // Create a stable context reference purely for HMR subscription
-      const hmrContext = require.context(
-        "../projector/modules",
-        false,
-        /\.js$/
-      );
-      if (
-        module &&
-        module.hot &&
-        hmrContext &&
-        typeof hmrContext.id !== "undefined"
-      ) {
-        module.hot.accept(hmrContext.id, () => {
-          loadModules();
-        });
-      }
-      // Also accept changes to base helpers that affect available methods
       if (module && module.hot) {
         try {
           module.hot.accept("../projector/helpers/moduleBase.js", () => {
@@ -1197,13 +1182,8 @@ const Dashboard = () => {
           });
         } catch {}
       }
-    } catch (e) {
-      console.warn(
-        "⚠️ [HMR] Unable to register HMR for modules context:",
-        e.message
-      );
-    }
-  }, [loadModules, workspacePath]);
+    } catch (e) {}
+  }, [loadModules]);
 
   const isInitialMount = useRef(true);
   const userDataLoadedSuccessfully = useRef(false);
@@ -1223,7 +1203,7 @@ const Dashboard = () => {
       let activeTrackIdToUse = appState.activeTrackId;
       let activeSetIdToUse = appState.activeSetId;
       let sequencerMutedToUse = appState.sequencerMuted;
-      const projectDir = getProjectDirFromArgv();
+      const projectDir = getProjectDir();
       const workspacePathToUse = projectDir || null;
       workspacePathRef.current = workspacePathToUse;
       setIsSequencerMuted(Boolean(sequencerMutedToUse));
@@ -1232,10 +1212,19 @@ const Dashboard = () => {
         setWorkspaceModalMode("initial");
         setWorkspaceModalPath(null);
         setIsWorkspaceModalOpen(true);
-      } else if (!isExistingDirectory(workspacePathToUse)) {
-        setWorkspaceModalMode("lostSync");
-        setWorkspaceModalPath(workspacePathToUse);
-        setIsWorkspaceModalOpen(true);
+      } else {
+        const bridge = globalThis.nwWrldBridge;
+        const isAvailable =
+          bridge &&
+          bridge.project &&
+          typeof bridge.project.isDirAvailable === "function"
+            ? bridge.project.isDirAvailable()
+            : false;
+        if (!isAvailable) {
+          setWorkspaceModalMode("lostSync");
+          setWorkspaceModalPath(workspacePathToUse);
+          setIsWorkspaceModalOpen(true);
+        }
       }
 
       if (activeSetIdToUse) {

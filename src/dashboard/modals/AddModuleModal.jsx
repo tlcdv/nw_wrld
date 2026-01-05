@@ -70,17 +70,28 @@ export const AddModuleModal = ({
         id: instanceId,
         type: module.id || module.name,
       });
-      const constructorMethods = module.methods
-        .filter((m) => m.executeOnLoad)
-        .map((m) => ({
-          name: m.name,
-          options: m?.options?.length
-            ? m.options.map((opt) => ({
-                name: opt.name,
-                value: opt.defaultVal,
-              }))
-            : null,
-        }));
+      const moduleMethods = Array.isArray(module.methods) ? module.methods : [];
+      const hasMethodData = moduleMethods.length > 0;
+      const constructorMethods = hasMethodData
+        ? moduleMethods
+            .filter((m) => m.executeOnLoad)
+            .map((m) => ({
+              name: m.name,
+              options: m?.options?.length
+                ? m.options.map((opt) => ({
+                    name: opt.name,
+                    value: opt.defaultVal,
+                  }))
+                : null,
+            }))
+        : [];
+
+      if (!constructorMethods.some((m) => m.name === "matrix")) {
+        constructorMethods.unshift({ name: "matrix", options: null });
+      }
+      if (!constructorMethods.some((m) => m.name === "show")) {
+        constructorMethods.push({ name: "show", options: null });
+      }
       track.modulesData[instanceId] = {
         constructor: constructorMethods,
         methods: {},
@@ -117,54 +128,46 @@ export const AddModuleModal = ({
               <div className="pl-6 uppercase flex flex-col flex-wrap gap-2">
                 {modules.map((module) => {
                   const handlePreview = () => {
-                    const constructorMethods = module.methods
-                      .filter((m) => m.executeOnLoad)
-                      .map((m) => ({
-                        name: m.name,
-                        options: m?.options?.length
-                          ? m.options.map((opt) => ({
-                              name: opt.name,
-                              value: opt.defaultVal,
-                            }))
-                          : null,
-                      }));
+                    const moduleMethods = Array.isArray(module.methods)
+                      ? module.methods
+                      : [];
+                    const hasMethodData = moduleMethods.length > 0;
 
-                    const matrixMethod = module.methods.find(
-                      (m) => m.name === "matrix"
-                    );
-                    const showMethod = module.methods.find(
-                      (m) => m.name === "show"
-                    );
+                    if (!hasMethodData) {
+                      sendToProjector("module-introspect", {
+                        moduleId: module.id || module.name,
+                      });
+                    }
+
+                    const constructorMethods = hasMethodData
+                      ? moduleMethods
+                          .filter((m) => m.executeOnLoad)
+                          .map((m) => ({
+                            name: m.name,
+                            options: m?.options?.length
+                              ? m.options.map((opt) => ({
+                                  name: opt.name,
+                                  value: opt.defaultVal,
+                                }))
+                              : null,
+                          }))
+                      : [];
 
                     const finalConstructorMethods = [...constructorMethods];
-
                     if (
-                      matrixMethod &&
                       !finalConstructorMethods.some((m) => m.name === "matrix")
                     ) {
                       finalConstructorMethods.unshift({
                         name: "matrix",
-                        options: matrixMethod?.options?.length
-                          ? matrixMethod.options.map((opt) => ({
-                              name: opt.name,
-                              value: opt.defaultVal,
-                            }))
-                          : null,
+                        options: null,
                       });
                     }
-
                     if (
-                      showMethod &&
                       !finalConstructorMethods.some((m) => m.name === "show")
                     ) {
                       finalConstructorMethods.push({
                         name: "show",
-                        options: showMethod?.options?.length
-                          ? showMethod.options.map((opt) => ({
-                              name: opt.name,
-                              value: opt.defaultVal,
-                            }))
-                          : null,
+                        options: null,
                       });
                     }
 

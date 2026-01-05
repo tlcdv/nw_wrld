@@ -1,9 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: Text
+@nwWrld category: Text
+@nwWrld imports: ModuleBase
+*/
 
 class Text extends ModuleBase {
-  static name = "Text";
-  static category = "Text";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -132,5 +133,3 @@ class Text extends ModuleBase {
 }
 
 export default Text;
-
-

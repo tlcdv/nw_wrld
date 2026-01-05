@@ -1,9 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: Image
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, assetUrl
+*/
 
 class Image extends ModuleBase {
-  static name = "Image";
-  static category = "2D";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -41,8 +42,7 @@ class Image extends ModuleBase {
   }
 
   setImage({ path = "images/blueprint.png" } = {}) {
-    const sdk = globalThis.nwWrldSdk || {};
-    const url = typeof sdk.assetUrl === "function" ? sdk.assetUrl(path) : null;
+    const url = typeof assetUrl === "function" ? assetUrl(path) : null;
     if (this.img && url) {
       this.img.src = url;
     }

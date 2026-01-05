@@ -7,10 +7,6 @@ import React, {
 } from "react";
 import Editor, { loader } from "@monaco-editor/react";
 import { FaTimes, FaRedo, FaPlay } from "react-icons/fa";
-import fs from "fs";
-import path from "path";
-import { ipcRenderer, clipboard, shell } from "electron";
-import { atomicWriteFileSync } from "../../shared/json/atomicWrite.js";
 import { Button } from "./Button.js";
 import {
   TextInput,
@@ -25,17 +21,16 @@ import { MethodBlock } from "./MethodBlock.js";
 import { HelpIcon } from "./HelpIcon.js";
 import { HELP_TEXT } from "../../shared/helpText.js";
 
-const TEMPLATES = {
-  basic: (moduleName) => `const { ModuleBase } = globalThis.nwWrldSdk || {};
+const getBridge = () => globalThis.nwWrldBridge;
 
-if (!ModuleBase) {
-  throw new Error("nwWrldSdk.ModuleBase is not available");
-}
+const TEMPLATES = {
+  basic: (moduleName) => `/*
+@nwWrld name: ${moduleName}
+@nwWrld category: Custom
+@nwWrld imports: ModuleBase
+*/
 
 class ${moduleName} extends ModuleBase {
-  static name = "${moduleName}";
-  static category = "Custom";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -85,22 +80,13 @@ class ${moduleName} extends ModuleBase {
 export default ${moduleName};
 `,
 
-  threejs: (
-    moduleName
-  ) => `const { BaseThreeJsModule } = globalThis.nwWrldSdk || {};
-const THREE = globalThis.THREE;
-
-if (!BaseThreeJsModule) {
-  throw new Error("nwWrldSdk.BaseThreeJsModule is not available");
-}
-if (!THREE) {
-  throw new Error("THREE is not available");
-}
+  threejs: (moduleName) => `/*
+@nwWrld name: ${moduleName}
+@nwWrld category: 3D
+@nwWrld imports: BaseThreeJsModule, THREE
+*/
 
 class ${moduleName} extends BaseThreeJsModule {
-  static name = "${moduleName}";
-  static category = "3D";
-
   static methods = [
     ...((BaseThreeJsModule && BaseThreeJsModule.methods) || []),
     {
@@ -164,20 +150,13 @@ class ${moduleName} extends BaseThreeJsModule {
 export default ${moduleName};
 `,
 
-  p5js: (moduleName) => `const { ModuleBase } = globalThis.nwWrldSdk || {};
-const p5 = globalThis.p5;
-
-if (!ModuleBase) {
-  throw new Error("nwWrldSdk.ModuleBase is not available");
-}
-if (!p5) {
-  throw new Error("p5 is not available");
-}
+  p5js: (moduleName) => `/*
+@nwWrld name: ${moduleName}
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, p5
+*/
 
 class ${moduleName} extends ModuleBase {
-  static name = "${moduleName}";
-  static category = "2D";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -264,23 +243,20 @@ export const ModuleEditorModal = ({
     if (workspacePath) {
       return `${workspacePath}/modules/${moduleName}.js`;
     }
-    return `/src/projector/modules/${moduleName}.js`;
-  }, [moduleName, workspacePath]);
-
-  const absoluteFilePath = useMemo(() => {
-    if (!moduleName) return null;
-    if (workspacePath) {
-      return path.join(workspacePath, "modules", `${moduleName}.js`);
-    }
-    const srcDir = path.join(__dirname, "..", "..");
-    return path.join(srcDir, "projector", "modules", `${moduleName}.js`);
+    return null;
   }, [moduleName, workspacePath]);
 
   const handleOpenInFileExplorer = useCallback(() => {
-    if (absoluteFilePath) {
-      shell.showItemInFolder(absoluteFilePath);
+    const bridge = getBridge();
+    if (
+      !bridge ||
+      !bridge.workspace ||
+      typeof bridge.workspace.showModuleInFolder !== "function"
+    ) {
+      return;
     }
-  }, [absoluteFilePath]);
+    bridge.workspace.showModuleInFolder(moduleName);
+  }, [moduleName]);
 
   const { moduleBase, threeBase } = useMemo(() => getBaseMethodNames(), []);
 
@@ -311,8 +287,11 @@ export const ModuleEditorModal = ({
 
   useEffect(() => {
     try {
-      const vsPath = path.join(__dirname, "..", "..", "..", "dist", "vs");
-      loader.config({ paths: { vs: vsPath } });
+      const vsUrl = new URL(
+        "../../../dist/vs",
+        window.location.href
+      ).toString();
+      loader.config({ paths: { vs: vsUrl } });
     } catch (e) {}
   }, []);
 
@@ -328,11 +307,13 @@ export const ModuleEditorModal = ({
       const WORKSPACE_TEMPLATES = {
         basic: (n) =>
           [
-            "const { ModuleBase } = globalThis.nwWrldSdk || {};",
+            "/*",
+            `@nwWrld name: ${n}`,
+            "@nwWrld category: Custom",
+            "@nwWrld imports: ModuleBase",
+            "*/",
             "",
             `class ${n} extends ModuleBase {`,
-            `  static name = "${n}";`,
-            '  static category = "Custom";',
             "",
             "  static methods = [",
             "    ...((ModuleBase && ModuleBase.methods) || []),",
@@ -381,12 +362,13 @@ export const ModuleEditorModal = ({
           ].join("\n"),
         threejs: (n) =>
           [
-            "const { BaseThreeJsModule } = globalThis.nwWrldSdk || {};",
-            "const THREE = globalThis.THREE;",
+            "/*",
+            `@nwWrld name: ${n}`,
+            "@nwWrld category: 3D",
+            "@nwWrld imports: BaseThreeJsModule, THREE",
+            "*/",
             "",
             `class ${n} extends BaseThreeJsModule {`,
-            `  static name = "${n}";`,
-            '  static category = "3D";',
             "",
             "  static methods = [",
             "    ...((BaseThreeJsModule && BaseThreeJsModule.methods) || []),",
@@ -420,12 +402,13 @@ export const ModuleEditorModal = ({
           ].join("\n"),
         p5js: (n) =>
           [
-            "const { ModuleBase } = globalThis.nwWrldSdk || {};",
-            "const p5 = globalThis.p5;",
+            "/*",
+            `@nwWrld name: ${n}`,
+            "@nwWrld category: 2D",
+            "@nwWrld imports: ModuleBase, p5",
+            "*/",
             "",
             `class ${n} extends ModuleBase {`,
-            `  static name = "${n}";`,
-            '  static category = "2D";',
             "",
             "  static methods = [",
             "    ...((ModuleBase && ModuleBase.methods) || []),",
@@ -474,30 +457,53 @@ export const ModuleEditorModal = ({
       ](moduleName);
       setCode(template);
       setIsLoading(false);
-      if (absoluteFilePath) {
-        try {
-          const dir = path.dirname(absoluteFilePath);
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+      try {
+        const bridge = getBridge();
+        if (
+          bridge &&
+          bridge.workspace &&
+          typeof bridge.workspace.moduleExists === "function" &&
+          typeof bridge.workspace.writeModuleTextSync === "function"
+        ) {
+          if (!bridge.workspace.moduleExists(moduleName)) {
+            const res = bridge.workspace.writeModuleTextSync(
+              moduleName,
+              template
+            );
+            if (res && res.ok === false) {
+              setError(
+                `Failed to create module: ${res.reason || "write failed"}`
+              );
+            }
           }
-          if (!fs.existsSync(absoluteFilePath)) {
-            atomicWriteFileSync(absoluteFilePath, template);
-          }
-        } catch (err) {
-          setError(`Failed to create module: ${err.message}`);
         }
+      } catch (err) {
+        setError(`Failed to create module: ${err.message}`);
       }
     } else if (moduleName) {
-      try {
-        const fileContent = fs.readFileSync(absoluteFilePath, "utf-8");
-        setCode(fileContent);
-        setIsLoading(false);
-      } catch (err) {
-        setError(`Failed to load module: ${err.message}`);
-        setIsLoading(false);
-      }
+      (async () => {
+        try {
+          const bridge = getBridge();
+          if (
+            !bridge ||
+            !bridge.workspace ||
+            typeof bridge.workspace.readModuleText !== "function"
+          ) {
+            throw new Error("Workspace bridge unavailable");
+          }
+          const fileContent = await bridge.workspace.readModuleText(moduleName);
+          if (fileContent == null) {
+            throw new Error("Module file not found");
+          }
+          setCode(String(fileContent));
+          setIsLoading(false);
+        } catch (err) {
+          setError(`Failed to load module: ${err.message}`);
+          setIsLoading(false);
+        }
+      })();
     }
-  }, [isOpen, moduleName, templateType, absoluteFilePath, workspacePath]);
+  }, [isOpen, moduleName, templateType, workspacePath]);
 
   useEffect(() => {
     if (isOpen && moduleData && !isLoading) {
@@ -552,17 +558,16 @@ export const ModuleEditorModal = ({
         },
       };
 
-      ipcRenderer.send("dashboard-to-projector", previewData);
+      const bridge = getBridge();
+      bridge?.messaging?.sendToProjector?.(previewData.type, previewData.props);
     } catch (error) {
       console.error("Error triggering preview:", error);
     }
   };
 
   const clearPreview = () => {
-    ipcRenderer.send("dashboard-to-projector", {
-      type: "clear-preview",
-      props: {},
-    });
+    const bridge = getBridge();
+    bridge?.messaging?.sendToProjector?.("clear-preview", {});
   };
 
   const handleMethodTrigger = (method) => {
@@ -571,13 +576,11 @@ export const ModuleEditorModal = ({
       params[opt.name] = opt.value;
     });
 
-    ipcRenderer.send("dashboard-to-projector", {
-      type: "trigger-preview-method",
-      props: {
-        moduleName: moduleName,
-        methodName: method.name,
-        options: params,
-      },
+    const bridge = getBridge();
+    bridge?.messaging?.sendToProjector?.("trigger-preview-method", {
+      moduleName: moduleName,
+      methodName: method.name,
+      options: params,
     });
   };
 
@@ -701,11 +704,24 @@ export const ModuleEditorModal = ({
 
     editor.focus();
 
+    const writeClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(String(text ?? ""));
+      } catch {}
+    };
+    const readClipboard = async () => {
+      try {
+        return await navigator.clipboard.readText();
+      } catch {
+        return "";
+      }
+    };
+
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, () => {
       const selection = editor.getSelection();
       const selectedText = editor.getModel().getValueInRange(selection);
       if (selectedText) {
-        clipboard.writeText(selectedText);
+        void writeClipboard(selectedText);
       }
     });
 
@@ -713,7 +729,7 @@ export const ModuleEditorModal = ({
       const selection = editor.getSelection();
       const selectedText = editor.getModel().getValueInRange(selection);
       if (selectedText) {
-        clipboard.writeText(selectedText);
+        void writeClipboard(selectedText);
         editor.executeEdits("", [
           {
             range: selection,
@@ -724,22 +740,17 @@ export const ModuleEditorModal = ({
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, () => {
-      const text = clipboard.readText();
-      if (text) {
-        const selection = editor.getSelection();
-        editor.executeEdits("", [
-          {
-            range: selection,
-            text: text,
-          },
-        ]);
+      const selection = editor.getSelection();
+      readClipboard().then((text) => {
+        if (!text) return;
+        editor.executeEdits("", [{ range: selection, text }]);
         const newPosition = {
           lineNumber: selection.startLineNumber,
           column: selection.startColumn + text.length,
         };
         editor.setPosition(newPosition);
         editor.focus();
-      }
+      });
     });
 
     editor.addAction({
@@ -752,7 +763,7 @@ export const ModuleEditorModal = ({
         const selection = ed.getSelection();
         const selectedText = ed.getModel().getValueInRange(selection);
         if (selectedText) {
-          clipboard.writeText(selectedText);
+          void writeClipboard(selectedText);
         }
       },
     });
@@ -767,7 +778,7 @@ export const ModuleEditorModal = ({
         const selection = ed.getSelection();
         const selectedText = ed.getModel().getValueInRange(selection);
         if (selectedText) {
-          clipboard.writeText(selectedText);
+          void writeClipboard(selectedText);
           ed.executeEdits("", [
             {
               range: selection,
@@ -785,16 +796,12 @@ export const ModuleEditorModal = ({
       contextMenuGroupId: "9_cutcopypaste",
       contextMenuOrder: 3,
       run: (ed) => {
-        const text = clipboard.readText();
-        if (text) {
-          const selection = ed.getSelection();
-          ed.executeEdits("", [
-            {
-              range: selection,
-              text: text,
-            },
-          ]);
-        }
+        const selection = ed.getSelection();
+        return readClipboard().then((text) => {
+          if (!text) return null;
+          ed.executeEdits("", [{ range: selection, text }]);
+          return null;
+        });
       },
     });
 

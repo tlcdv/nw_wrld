@@ -1,11 +1,12 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
-const p5 = globalThis.p5;
+/*
+@nwWrld name: AsteroidGraph
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, p5, loadJson
+*/
 
 const getSdkMeteorDataset = async () => {
   try {
-    const sdk = globalThis.nwWrldSdk || {};
-    if (typeof sdk.loadJson !== "function") return null;
-    const data = await sdk.loadJson("json/meteor.json");
+    const data = await loadJson("json/meteor.json");
     return Array.isArray(data) ? data : null;
   } catch {
     return null;
@@ -23,9 +24,6 @@ const makeRandomMeteor = () => {
 };
 
 class AsteroidGraph extends ModuleBase {
-  static name = "AsteroidGraph";
-  static category = "2D";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {

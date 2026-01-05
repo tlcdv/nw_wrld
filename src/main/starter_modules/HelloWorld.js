@@ -1,8 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: HelloWorld
+@nwWrld category: Text
+@nwWrld imports: ModuleBase
+*/
 
 class HelloWorld extends ModuleBase {
-  static name = "HelloWorld";
-  static category = "Text";
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -48,5 +50,3 @@ class HelloWorld extends ModuleBase {
 }
 
 export default HelloWorld;
-
-

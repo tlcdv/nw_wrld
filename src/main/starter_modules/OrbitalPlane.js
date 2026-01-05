@@ -1,10 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
-const p5 = globalThis.p5;
+/*
+@nwWrld name: OrbitalPlane
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, p5
+*/
 
 class OrbitalPlane extends ModuleBase {
-  static name = "OrbitalPlane";
-  static category = "2D";
-
   static methods = [...((ModuleBase && ModuleBase.methods) || [])];
 
   constructor(container) {

@@ -1,9 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: CodeColumns
+@nwWrld category: Text
+@nwWrld imports: ModuleBase
+*/
 
 class CodeColumns extends ModuleBase {
-  static name = "CodeColumns";
-  static category = "Text";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -145,5 +146,3 @@ class CodeColumns extends ModuleBase {
 }
 
 export default CodeColumns;
-
-

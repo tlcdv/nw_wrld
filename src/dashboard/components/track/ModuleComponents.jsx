@@ -7,7 +7,6 @@ import React, {
 } from "react";
 import { useAtom } from "jotai";
 import * as d3 from "d3";
-import { ipcRenderer } from "electron";
 import { SortableWrapper } from "../../shared/SortableWrapper.jsx";
 import {
   userDataAtom,

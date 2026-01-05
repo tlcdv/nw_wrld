@@ -1,5 +1,8 @@
-const { BaseThreeJsModule } = globalThis.nwWrldSdk || {};
-const THREE = globalThis.THREE;
+/*
+@nwWrld name: LowEarthPoint
+@nwWrld category: 3D
+@nwWrld imports: BaseThreeJsModule, THREE
+*/
 
 const sampleN = (arr, n) => {
   if (!arr || arr.length === 0) return [];
@@ -15,9 +18,6 @@ const sampleN = (arr, n) => {
 };
 
 class LowEarthPointModule extends BaseThreeJsModule {
-  static name = "LowEarthPoint";
-  static category = "3D";
-
   static methods = [
     ...((BaseThreeJsModule && BaseThreeJsModule.methods) || []),
     {

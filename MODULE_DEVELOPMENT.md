@@ -1,6 +1,6 @@
 # Module Development Guide
 
-This guide covers creating custom visual modules for nw_wrld, including workspace module development and the nwWrldSdk API.
+This guide covers creating custom visual modules for nw_wrld, including the workspace (project folder) module contract and the runtime-injected SDK surface.
 
 ## Table of Contents
 
@@ -53,20 +53,28 @@ MyProject/
 
 ### Module Structure for Workspace
 
-All workspace modules must use `globalThis.nwWrldSdk` to access the base classes and SDK methods:
+All workspace modules must follow the **docblock contract**:
+
+- **File identity**: `modules/Foo.js` → module id `Foo` (letters/numbers only; must start with a letter)
+- **Required docblock fields**:
+  - `@nwWrld name: ...` (display name in the UI)
+  - `@nwWrld category: ...` (how it groups in the UI)
+  - `@nwWrld imports: ...` (comma-separated dependency tokens; must include at least one)
+- **Default export**: the module must end with `export default YourClass;`
+
+Allowed `@nwWrld imports`:
+
+- **SDK**: `ModuleBase`, `BaseThreeJsModule`, `assetUrl`, `readText`, `loadJson`
+- **Global libs**: `THREE`, `p5`, `d3`
 
 ```javascript
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: MyModule
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase
+*/
 
 class MyModule extends ModuleBase {
-  static name = "MyModule";
-  static category = "2D";
-
-  static methods = [
-    ...((ModuleBase && ModuleBase.methods) || []),
-    // your custom methods
-  ];
-
   constructor(container) {
     super(container);
     this.init();
@@ -85,7 +93,7 @@ class MyModule extends ModuleBase {
 export default MyModule;
 ```
 
-**Important:** Always use the `globalThis.nwWrldSdk` pattern. Direct imports like `import ModuleBase from ...` won't work in workspace modules.
+**Important:** Do not use path-based `import ... from ...` inside workspace modules. Workspace modules are loaded from your project folder at runtime.
 
 ---
 
@@ -367,12 +375,19 @@ All options create UI controls in the Dashboard and pass values to your methods.
 
 ## nwWrldSdk API Reference
 
-The `nwWrldSdk` is a global object that provides access to base classes, asset loading, and workspace utilities for modules.
+nw_wrld injects the identifiers you request in `@nwWrld imports` so your module code can use them directly (`ModuleBase`, `assetUrl`, `THREE`, etc.).
+
+Internally, these map to `globalThis.nwWrldSdk` (SDK helpers) and `globalThis.THREE/p5/d3` (libraries).
 
 ### Accessing the SDK
 
 ```javascript
-const { ModuleBase, BaseThreeJsModule } = globalThis.nwWrldSdk || {};
+// Recommended: declare imports in the docblock and use the injected identifiers.
+/*
+@nwWrld name: Uses SDK
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, assetUrl, readText, loadJson
+*/
 ```
 
 ### Base Classes
@@ -464,7 +479,7 @@ class My3DModule extends BaseThreeJsModule {
 Get a `file://` URL for a workspace asset.
 
 ```javascript
-const imageUrl = nwWrldSdk.assetUrl("images/blueprint.png");
+const imageUrl = assetUrl("images/blueprint.png");
 if (imageUrl) {
   this.img.src = imageUrl;
 }
@@ -483,7 +498,7 @@ if (imageUrl) {
 Load and parse a JSON file from workspace assets.
 
 ```javascript
-const data = await nwWrldSdk.loadJson("json/meteor.json");
+const data = await loadJson("json/meteor.json");
 if (data) {
   this.processData(data);
 }
@@ -514,7 +529,7 @@ async loadData() {
 Read a text file from workspace assets.
 
 ```javascript
-const text = await nwWrldSdk.readText("data/poem.txt");
+const text = await readText("data/poem.txt");
 if (text) {
   this.displayText(text);
 }
@@ -531,7 +546,7 @@ if (text) {
 Get the absolute path to the current workspace folder.
 
 ```javascript
-const workspaceDir = nwWrldSdk.getWorkspaceDir();
+const workspaceDir = globalThis.nwWrldSdk?.getWorkspaceDir?.();
 console.log("Working in:", workspaceDir);
 // Example: /Users/yourname/MyProject
 ```

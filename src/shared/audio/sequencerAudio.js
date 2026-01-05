@@ -1,6 +1,4 @@
 import * as Tone from "tone";
-import path from "path";
-import fs from "fs";
 
 class SequencerAudio {
   constructor() {
@@ -28,20 +26,16 @@ class SequencerAudio {
       }
 
       if (!this.kickPlayer) {
-        const srcDir = path.join(__dirname, "..", "..");
-        const kickPath = path.join(
-          srcDir,
-          "dashboard",
-          "assets",
-          "audio",
-          "kick.mp3"
-        );
-
-        const fileBuffer = await fs.promises.readFile(kickPath);
-        const arrayBuffer = fileBuffer.buffer.slice(
-          fileBuffer.byteOffset,
-          fileBuffer.byteOffset + fileBuffer.byteLength
-        );
+        const bridge = globalThis.nwWrldBridge;
+        const arrayBuffer =
+          bridge &&
+          bridge.app &&
+          typeof bridge.app.getKickMp3ArrayBuffer === "function"
+            ? bridge.app.getKickMp3ArrayBuffer()
+            : null;
+        if (!arrayBuffer) {
+          throw new Error("kick.mp3 could not be loaded");
+        }
 
         const audioContext = Tone.getContext().rawContext;
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);

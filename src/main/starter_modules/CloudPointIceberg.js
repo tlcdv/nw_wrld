@@ -1,5 +1,8 @@
-const { BaseThreeJsModule } = globalThis.nwWrldSdk || {};
-const THREE = globalThis.THREE;
+/*
+@nwWrld name: CloudPointIceberg
+@nwWrld category: 3D
+@nwWrld imports: BaseThreeJsModule, THREE
+*/
 
 const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -43,9 +46,6 @@ const valueNoise3 = (x, y, z, seed) => {
 const valueNoise2 = (x, y, seed) => valueNoise3(x, y, 0, seed);
 
 class CloudPointIceberg extends BaseThreeJsModule {
-  static name = "CloudPointIceberg";
-  static category = "3D";
-
   static methods = [
     ...((BaseThreeJsModule && BaseThreeJsModule.methods) || []),
     {

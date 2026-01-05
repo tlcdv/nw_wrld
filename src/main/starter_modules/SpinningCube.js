@@ -1,9 +1,10 @@
-const { BaseThreeJsModule } = globalThis.nwWrldSdk || {};
-const THREE = globalThis.THREE;
+/*
+@nwWrld name: SpinningCube
+@nwWrld category: 3D
+@nwWrld imports: BaseThreeJsModule, THREE
+*/
 
 class SpinningCube extends BaseThreeJsModule {
-  static name = "SpinningCube";
-  static category = "3D";
   static methods = [
     ...((BaseThreeJsModule && BaseThreeJsModule.methods) || []),
   ];

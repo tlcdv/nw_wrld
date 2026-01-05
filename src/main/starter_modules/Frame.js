@@ -1,4 +1,8 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: Frame
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase
+*/
 
 const randomInt = (min, max) => {
   const minNum = Number(min);
@@ -10,9 +14,6 @@ const randomInt = (min, max) => {
 };
 
 class Frame extends ModuleBase {
-  static name = "Frame";
-  static category = "2D";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {

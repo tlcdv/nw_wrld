@@ -1,9 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: ZKProofVisualizer
+@nwWrld category: Text
+@nwWrld imports: ModuleBase
+*/
 
 class ZKProofVisualizer extends ModuleBase {
-  static name = "ZKProofVisualizer";
-  static category = "Text";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -213,5 +214,3 @@ class ZKProofVisualizer extends ModuleBase {
 }
 
 export default ZKProofVisualizer;
-
-

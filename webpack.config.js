@@ -6,10 +6,14 @@ const monacoRoot = path.dirname(require.resolve("monaco-editor/package.json"));
 
 module.exports = {
   mode: "development",
-  entry: "./src/renderer.js",
+  entry: {
+    bundle: ["./src/rendererPolyfills.js", "./src/renderer.js"],
+    moduleSandbox: "./src/projector/moduleSandboxEntry.js",
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "bundle.js",
+    filename: "[name].js",
+    globalObject: "globalThis",
     publicPath: "auto", // Use this as the publicPath
   },
   node: {
@@ -92,5 +96,5 @@ module.exports = {
   watchOptions: {
     ignored: /src\/shared\/json\/userData\.json$/,
   },
-  target: "electron-renderer",
+  target: "web",
 };

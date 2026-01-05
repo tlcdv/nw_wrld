@@ -1,10 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
-const d3 = globalThis.d3;
+/*
+@nwWrld name: MathOrbitalMap
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase, d3
+*/
 
 class MathOrbitalMap extends ModuleBase {
-  static name = "MathOrbitalMap";
-  static category = "2D";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {
@@ -376,5 +376,3 @@ class MathOrbitalMap extends ModuleBase {
 }
 
 export default MathOrbitalMap;
-
-

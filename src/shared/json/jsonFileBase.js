@@ -1,178 +1,63 @@
-import fs from "fs";
-import path from "path";
-import {
-  atomicWriteFile,
-  atomicWriteFileSync,
-  cleanupStaleTempFiles,
-} from "./atomicWrite.js";
+const getBridge = () => globalThis.nwWrldAppBridge;
 
-const PROJECT_DIR_ARG_PREFIX = "--nwWrldProjectDir=";
-const REQUIRE_PROJECT_ARG_PREFIX = "--nwWrldRequireProject=";
+export const getJsonDir = () => null;
 
-const getProjectDirFromArgv = () => {
-  const arg = (process.argv || []).find((a) =>
-    a.startsWith(PROJECT_DIR_ARG_PREFIX)
-  );
-  if (!arg) return null;
-  const value = arg.slice(PROJECT_DIR_ARG_PREFIX.length);
-  return value || null;
-};
-
-const getRequireProjectFromArgv = () => {
-  const arg = (process.argv || []).find((a) =>
-    a.startsWith(REQUIRE_PROJECT_ARG_PREFIX)
-  );
-  if (!arg) return false;
-  const value = arg.slice(REQUIRE_PROJECT_ARG_PREFIX.length);
-  return value === "1" || value === "true";
-};
-
-const isExistingDirectory = (dirPath) => {
-  try {
-    return fs.statSync(dirPath).isDirectory();
-  } catch {
-    return false;
-  }
-};
-
-export const getJsonDir = () => {
-  const projectDir = getProjectDirFromArgv();
-  const requireProject = getRequireProjectFromArgv();
-  if (projectDir) {
-    if (!isExistingDirectory(projectDir)) {
-      globalThis.__NW_WRLD_PROJECT_STATUS__ = {
-        ok: false,
-        reason: "PROJECT_DIR_MISSING",
-        projectDir,
-      };
-      return path.join(__dirname, "..", "..", "shared", "json");
-    }
-    const dir = path.join(projectDir, "nw_wrld_data", "json");
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-    } catch {}
-    globalThis.__NW_WRLD_PROJECT_STATUS__ = { ok: true, projectDir };
-    return dir;
-  }
-  if (requireProject) {
-    globalThis.__NW_WRLD_PROJECT_STATUS__ = {
-      ok: false,
-      reason: "NO_PROJECT_SELECTED",
-      projectDir: null,
-    };
-  }
-  const fallbackDir = path.join(__dirname, "..", "..", "shared", "json");
-  return fallbackDir;
-};
-
-export const getJsonFilePath = (filename) => path.join(getJsonDir(), filename);
-
-const getLegacyJsonDir = () => {
-  const candidates = [
-    path.join(process.cwd(), "src", "shared", "json"),
-    path.join(__dirname, "..", "..", "shared", "json"),
-  ];
-
-  for (const dir of candidates) {
-    try {
-      if (fs.existsSync(dir)) return dir;
-    } catch {}
-  }
-  return candidates[0];
-};
-
-const maybeMigrateLegacyFile = (filename) => {
-  const jsonDir = getJsonDir();
-  const legacyDir = getLegacyJsonDir();
-  if (jsonDir === legacyDir) return;
-  const destPath = path.join(jsonDir, filename);
-  if (fs.existsSync(destPath)) return;
-  const legacyPath = path.join(legacyDir, filename);
-  if (!fs.existsSync(legacyPath)) return;
-  try {
-    fs.copyFileSync(legacyPath, destPath);
-    const legacyBackupPath = `${legacyPath}.backup`;
-    const destBackupPath = `${destPath}.backup`;
-    if (!fs.existsSync(destBackupPath) && fs.existsSync(legacyBackupPath)) {
-      fs.copyFileSync(legacyBackupPath, destBackupPath);
-    }
-  } catch {}
-};
-
-try {
-  cleanupStaleTempFiles(getJsonDir());
-} catch {}
+export const getJsonFilePath = (filename) => filename;
 
 export const loadJsonFile = async (filename, defaultValue, warningMsg) => {
-  maybeMigrateLegacyFile(filename);
-  const filePath = getJsonFilePath(filename);
+  const bridge = getBridge();
+  if (!bridge || !bridge.json || typeof bridge.json.read !== "function") {
+    if (warningMsg) console.warn(warningMsg);
+    return defaultValue;
+  }
   try {
-    const data = await fs.promises.readFile(filePath, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    if (warningMsg) console.warn(warningMsg, error);
-
-    try {
-      const backupPath = `${filePath}.backup`;
-      const backupData = await fs.promises.readFile(backupPath, "utf-8");
-      console.warn(`Restored ${filename} from backup`);
-      return JSON.parse(backupData);
-    } catch (backupError) {
-      return defaultValue;
-    }
+    return await bridge.json.read(filename, defaultValue);
+  } catch (e) {
+    if (warningMsg) console.warn(warningMsg, e);
+    return defaultValue;
   }
 };
 
 export const loadJsonFileSync = (filename, defaultValue, errorMsg) => {
-  maybeMigrateLegacyFile(filename);
-  const filePath = getJsonFilePath(filename);
+  const bridge = getBridge();
+  if (!bridge || !bridge.json || typeof bridge.json.readSync !== "function") {
+    if (errorMsg) console.error(errorMsg);
+    return defaultValue;
+  }
   try {
-    const data = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    if (errorMsg) console.error(errorMsg, error);
-
-    try {
-      const backupPath = `${filePath}.backup`;
-      const backupData = fs.readFileSync(backupPath, "utf-8");
-      console.warn(`Restored ${filename} from backup`);
-      return JSON.parse(backupData);
-    } catch (backupError) {
-      return defaultValue;
-    }
+    return bridge.json.readSync(filename, defaultValue);
+  } catch (e) {
+    if (errorMsg) console.error(errorMsg, e);
+    return defaultValue;
   }
 };
 
 export const saveJsonFile = async (filename, data) => {
-  const filePath = getJsonFilePath(filename);
-  const status = globalThis.__NW_WRLD_PROJECT_STATUS__;
-  if (status && status.ok === false) {
-    console.error(
-      `Refusing to write ${filename}: project folder is not available (${status.reason}).`
-    );
+  const bridge = getBridge();
+  if (!bridge || !bridge.json || typeof bridge.json.write !== "function") {
+    console.error(`Refusing to write ${filename}: json bridge is unavailable.`);
     return;
   }
-  try {
-    const dataString = JSON.stringify(data, null, 2);
-    await atomicWriteFile(filePath, dataString);
-  } catch (error) {
-    console.error(`Error writing ${filename}:`, error);
+  const res = await bridge.json.write(filename, data);
+  if (res && res.ok === false) {
+    console.error(
+      `Refusing to write ${filename}: project folder is not available (${res.reason}).`
+    );
   }
 };
 
 export const saveJsonFileSync = (filename, data) => {
-  const filePath = getJsonFilePath(filename);
-  const status = globalThis.__NW_WRLD_PROJECT_STATUS__;
-  if (status && status.ok === false) {
+  const bridge = getBridge();
+  if (!bridge || !bridge.json || typeof bridge.json.writeSync !== "function") {
     console.error(
-      `Refusing to write ${filename} (sync): project folder is not available (${status.reason}).`
+      `Refusing to write ${filename} (sync): json bridge is unavailable.`
     );
     return;
   }
-  try {
-    const dataString = JSON.stringify(data, null, 2);
-    atomicWriteFileSync(filePath, dataString);
-  } catch (error) {
-    console.error(`Error writing ${filename} (sync):`, error);
+  const res = bridge.json.writeSync(filename, data);
+  if (res && res.ok === false) {
+    console.error(
+      `Refusing to write ${filename} (sync): project folder is not available (${res.reason}).`
+    );
   }
 };

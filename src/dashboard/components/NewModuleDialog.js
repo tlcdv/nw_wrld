@@ -3,8 +3,6 @@ import { Button } from "./Button.js";
 import { ModalHeader } from "./ModalHeader.js";
 import { ModalFooter } from "./ModalFooter.js";
 import { TextInput, Select, Label } from "./FormInputs.js";
-import fs from "fs";
-import path from "path";
 
 const Modal = ({ isOpen, onClose, children, size = "small" }) => {
   if (!isOpen) return null;
@@ -42,17 +40,15 @@ export const NewModuleDialog = ({
       return "Module name must start with uppercase letter and contain only letters and numbers";
     }
 
-    // Check if file already exists
+    // Check if file already exists (workspace modules)
     try {
-      const filePath = workspacePath
-        ? path.join(workspacePath, "modules", `${name}.js`)
-        : path.join(
-            path.join(__dirname, "..", ".."),
-            "projector",
-            "modules",
-            `${name}.js`
-          );
-      if (fs.existsSync(filePath)) {
+      const bridge = globalThis.nwWrldBridge;
+      if (
+        bridge &&
+        bridge.workspace &&
+        typeof bridge.workspace.moduleExists === "function" &&
+        bridge.workspace.moduleExists(name)
+      ) {
         return "A module with this name already exists";
       }
     } catch (err) {
@@ -93,12 +89,7 @@ export const NewModuleDialog = ({
         <p className="text-neutral-500 text-[11px] font-mono">
           Once you create a module, you can edit it in your code editor. The
           module will be saved in{" "}
-          <code>
-            {workspacePath
-              ? path.join(workspacePath, "modules")
-              : "src/projector/modules"}
-          </code>
-          .
+          <code>{workspacePath ? `${workspacePath}/modules` : "modules"}</code>.
         </p>
         <div>
           <Label>Module Name</Label>

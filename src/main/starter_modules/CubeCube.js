@@ -1,5 +1,8 @@
-const { BaseThreeJsModule } = globalThis.nwWrldSdk || {};
-const THREE = globalThis.THREE;
+/*
+@nwWrld name: CubeCube
+@nwWrld category: 3D
+@nwWrld imports: BaseThreeJsModule, THREE
+*/
 
 const sample = (arr) => {
   if (!arr || !Array.isArray(arr) || arr.length === 0) return null;
@@ -7,9 +10,6 @@ const sample = (arr) => {
 };
 
 class CubeCube extends BaseThreeJsModule {
-  static name = "CubeCube";
-  static category = "3D";
-
   static methods = [
     ...((BaseThreeJsModule && BaseThreeJsModule.methods) || []),
     {
@@ -273,5 +273,3 @@ class CubeCube extends BaseThreeJsModule {
 }
 
 export default CubeCube;
-
-

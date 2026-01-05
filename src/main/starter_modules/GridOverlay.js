@@ -1,9 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: GridOverlay
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase
+*/
 
 class GridOverlay extends ModuleBase {
-  static name = "GridOverlay";
-  static category = "2D";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {

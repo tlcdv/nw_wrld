@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useAtom } from "jotai";
 import { remove } from "lodash";
+import { useIPCSend } from "../core/hooks/useIPC.js";
 import { Modal } from "../shared/Modal.jsx";
 import { ModalHeader } from "../components/ModalHeader.js";
 import { SortableWrapper } from "../shared/SortableWrapper.jsx";
@@ -133,14 +134,22 @@ export const MethodConfiguratorModal = ({
   const [userData, setUserData] = useAtom(userDataAtom);
   const [selectedChannel] = useAtom(selectedChannelAtom);
   const [selectedMethodForCode, setSelectedMethodForCode] = useState(null);
+  const sendToProjector = useIPCSend("dashboard-to-projector");
   const { moduleBase, threeBase } = useMemo(() => getBaseMethodNames(), []);
 
   const module = useMemo(() => {
     if (!selectedChannel) return null;
     return predefinedModules.find(
-      (m) => m.id === selectedChannel.moduleType || m.name === selectedChannel.moduleType
+      (m) =>
+        m.id === selectedChannel.moduleType ||
+        m.name === selectedChannel.moduleType
     );
   }, [predefinedModules, selectedChannel]);
+
+  const needsIntrospection =
+    Boolean(selectedChannel?.moduleType) &&
+    Boolean(module) &&
+    (!Array.isArray(module.methods) || module.methods.length === 0);
 
   const selectedModuleType = selectedChannel?.moduleType || null;
   const isWorkspaceMode = Boolean(workspacePath);
@@ -166,6 +175,21 @@ export const MethodConfiguratorModal = ({
     : `Module "${selectedModuleType}" is not available in the current workspace scan.`;
 
   const [activeSetId] = useAtom(activeSetIdAtom);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!needsIntrospection) return;
+    if (!selectedChannel?.moduleType) return;
+    sendToProjector("module-introspect", {
+      moduleId: selectedChannel.moduleType,
+    });
+  }, [
+    isOpen,
+    needsIntrospection,
+    selectedChannel?.moduleType,
+    sendToProjector,
+  ]);
+
   const methodConfigs = useMemo(() => {
     if (!selectedChannel) return [];
     const tracks = getActiveSetTracks(userData, activeSetId);
@@ -182,7 +206,7 @@ export const MethodConfiguratorModal = ({
       : moduleData.methods[channelKey] || [];
 
     return configs;
-  }, [userData, selectedChannel]);
+  }, [userData, selectedChannel, activeSetId]);
 
   const changeOption = useCallback(
     (methodName, optionName, value, field = "value") => {
@@ -204,7 +228,7 @@ export const MethodConfiguratorModal = ({
         }
       });
     },
-    [selectedChannel, setUserData]
+    [selectedChannel, setUserData, activeSetId]
   );
 
   const addMethod = useCallback(
@@ -249,7 +273,7 @@ export const MethodConfiguratorModal = ({
         }
       });
     },
-    [module, selectedChannel, setUserData]
+    [module, selectedChannel, setUserData, activeSetId]
   );
 
   const removeMethod = useCallback(
@@ -266,7 +290,7 @@ export const MethodConfiguratorModal = ({
         remove(methods, (m) => m.name === methodName);
       });
     },
-    [selectedChannel, setUserData]
+    [selectedChannel, setUserData, activeSetId]
   );
 
   const addMissingOption = useCallback(
@@ -279,11 +303,12 @@ export const MethodConfiguratorModal = ({
 
       updateActiveSet(setUserData, activeSetId, (activeSet) => {
         const track = activeSet.tracks[selectedChannel.trackIndex];
+        const channelKey = selectedChannel.isConstructor
+          ? "constructor"
+          : String(selectedChannel.channelNumber);
         const methods = selectedChannel.isConstructor
           ? track.modulesData[selectedChannel.instanceId].constructor
-          : track.modulesData[selectedChannel.instanceId].methods[
-              selectedChannel.channelName
-            ];
+          : track.modulesData[selectedChannel.instanceId].methods[channelKey];
         const method = methods.find((m) => m.name === methodName);
         if (method && !method.options.find((o) => o.name === optionName)) {
           if (!method.options) {
@@ -296,7 +321,7 @@ export const MethodConfiguratorModal = ({
         }
       });
     },
-    [module, selectedChannel, setUserData]
+    [module, selectedChannel, setUserData, activeSetId]
   );
 
   const methodLayers = useMemo(() => {

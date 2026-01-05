@@ -1,9 +1,10 @@
-const { ModuleBase } = globalThis.nwWrldSdk || {};
+/*
+@nwWrld name: Corners
+@nwWrld category: 2D
+@nwWrld imports: ModuleBase
+*/
 
 class Corners extends ModuleBase {
-  static name = "Corners";
-  static category = "2D";
-
   static methods = [
     ...((ModuleBase && ModuleBase.methods) || []),
     {

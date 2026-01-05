@@ -172,28 +172,23 @@ pulse({ intensity = 1.5, duration = 500 }) {
 All modules must:
 
 1. Extend `ModuleBase` or `BaseThreeJsModule`
-2. Define `static name` matching the class name
-3. Define `static category` for organization
-4. Include `...ModuleBase.methods` in their methods array
-5. Call `super()` first in constructor
-6. Implement `destroy()` and call `super.destroy()` last
+2. Include the required `@nwWrld` docblock metadata (`name`, `category`, `imports`)
+3. Default-export the module class
+4. Call `super()` first in constructor
+5. Implement `destroy()` and call `super.destroy()` last
 
 Example:
 
 ```javascript
-import ModuleBase from "../helpers/moduleBase.js";
+/*
+@nwWrld name: MyModule
+@nwWrld category: Examples
+@nwWrld imports: ModuleBase
+*/
 
 class MyModule extends ModuleBase {
-  static name = "MyModule";
-  static category = "Examples";
-
-  static methods = [
-    ...ModuleBase.methods,
-    // Your custom methods
-  ];
-
-  constructor(container, variation = null) {
-    super(container, variation);
+  constructor(container) {
+    super(container);
     this.init();
   }
 
@@ -277,15 +272,14 @@ git rebase upstream/main
 ### Creating a New Module
 
 1. Read the [Module Development Guide](MODULE_DEVELOPMENT.md)
-2. Create your module in `src/projector/modules/YourModule.js`
+2. Create your module in your project folder under `modules/YourModule.js`
 3. Follow the module structure standards
-4. Add comprehensive comments
-5. Test with multiple instances
-6. Create documentation (see below)
+4. Test with multiple instances
+5. Create documentation (see below)
 
 ### Module Documentation
 
-Create a file: `examples/modules/YourModule.md`
+If you’re contributing documentation for a module, add a markdown file alongside the docs in this repo (or link to a project folder example in the PR).
 
 Include:
 
@@ -323,12 +317,10 @@ What developers can learn from this module.
 
 ### Module Assets
 
-If your module needs assets:
+If your module needs assets, there are two cases:
 
-- Add images to `src/assets/images/`
-- Add data files (JSON) to `src/assets/json/`
-- Add fonts to `src/dashboard/assets/fonts/`
-- Document required assets in your module's README
+- **Starter assets shipped with nw_wrld** (seeded into new projects): add them under `src/assets/` (e.g. `src/assets/images/`, `src/assets/json/`)
+- **Assets for a specific user project**: they live in that project folder under `assets/` (e.g. `MyProject/assets/images/`)
 
 ### Module Categories
 

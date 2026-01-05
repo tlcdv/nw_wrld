@@ -2,7 +2,7 @@ export const HELP_TEXT = {
   trackNote:
     "The MIDI note or OSC address that activates this track. When triggered, the track becomes active and its modules load.",
   modules:
-    "Modules that appear in the Projector window. Create your own in the src/projector/modules directory.",
+    "Modules that appear in the Projector window. Create your own in your project folder under modules/.",
   methods:
     "Actions a module can perform (e.g., change color, show, hide). Trigger methods via sequencer patterns or external MIDI/OSC.",
   executeOnLoadMethods:
