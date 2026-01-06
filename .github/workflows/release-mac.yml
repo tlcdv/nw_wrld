@@ -29,13 +29,13 @@ jobs:
           node -e "const lock=require('./package-lock.json'); console.log('lockfileVersion:', lock.lockfileVersion);"
           node -e "const lock=require('./package-lock.json'); const p=lock.packages||{}; const root=p['node_modules/picomatch']?.version; const nested=p['node_modules/tinyglobby/node_modules/picomatch']?.version; const tiny=p['node_modules/tinyglobby']?.dependencies?.picomatch; console.log('picomatch root:',root); console.log('tinyglobby depends picomatch:',tiny); console.log('picomatch under tinyglobby:',nested);"
 
-      - name: Ensure npm version
+      - name: Configure npm for lockfile compatibility
         run: |
-          npm i -g npm@10.8.2
-          npm -v
+          npm config set legacy-peer-deps true
+          npm config get legacy-peer-deps
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Build DMG
         run: npm run dist:mac
