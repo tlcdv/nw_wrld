@@ -79,7 +79,7 @@ jobs:
         with:
           name: nw_wrld-win
           path: |
-            release/**/*.exe
+            release/nw_wrld*.exe
 
   github_release:
     name: Publish GitHub Release
@@ -96,4 +96,4 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           files: |
             artifacts/**/*.dmg
-            artifacts/**/*.exe
+            artifacts/**/nw_wrld*.exe
