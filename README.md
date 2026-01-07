@@ -11,7 +11,7 @@ Visuals can be triggered via the built-in 16-step sequencer or by configuring ex
 
 ## Beta Notice
 
-This project is currently in beta. Downloadable installers are not currently provided; run `nw_wrld` from source using this repository.
+This project is currently in beta. Downloadable installers are not currently provided; run `nw_wrld` from source using this repository. Please note that whilst the project is in beta, there will likely be frequent breaking changes between releases.
 
 ## Roadmap
 
@@ -22,6 +22,7 @@ This project is currently in beta. Downloadable installers are not currently pro
 - [ ] Multi-band audio threshold analysis (local processing) for channel triggers
 - [ ] Remote API input source with HTTP/WebSocket client for cloud-based services (audio analysis APIs, ML models, etc.)
 - [ ] Serial port input support for hardware sensor integration
+- [ ] Full TypeScript migration
 
 ## Features
 
