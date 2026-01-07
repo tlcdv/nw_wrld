@@ -33,6 +33,10 @@ function ensureWorkspaceStarterAssets(workspacePath) {
     path.join(jsonDir, "meteor.json")
   );
   safeCopyIfMissing(
+    path.join(srcAssetsDir, "json", "radiation.json"),
+    path.join(jsonDir, "radiation.json")
+  );
+  safeCopyIfMissing(
     path.join(srcAssetsDir, "images", "blueprint.png"),
     path.join(imagesDir, "blueprint.png")
   );
