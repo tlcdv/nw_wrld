@@ -35,7 +35,7 @@ module.exports = (env, argv) => {
           },
         },
         {
-          test: /\.scss$/,
+          test: /\.css$/,
           use: [
             "style-loader",
             "css-loader",
@@ -46,12 +46,6 @@ module.exports = (env, argv) => {
                   ident: "postcss",
                   plugins: [require("tailwindcss"), require("autoprefixer")],
                 },
-              },
-            },
-            {
-              loader: "sass-loader",
-              options: {
-                api: "modern",
               },
             },
           ],

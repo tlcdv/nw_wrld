@@ -1,7 +1,7 @@
 import Dashboard from "./dashboard/Dashboard.js";
 import Projector from "./projector/Projector.js";
 
-import "./shared/styles/_main.scss";
+import "./shared/styles/_main.css";
 
 const App = {
   init() {
