@@ -22,10 +22,12 @@ function ensureWorkspaceStarterAssets(workspacePath) {
   const jsonDir = path.join(assetsDir, "json");
   const imagesDir = path.join(assetsDir, "images");
   const modelsDir = path.join(assetsDir, "models");
+  const fontsDir = path.join(assetsDir, "fonts");
 
   ensureDir(jsonDir);
   ensureDir(imagesDir);
   ensureDir(modelsDir);
+  ensureDir(fontsDir);
 
   const srcAssetsDir = path.join(__dirname, "..", "assets");
   safeCopyIfMissing(
@@ -59,6 +61,15 @@ function ensureWorkspaceStarterAssets(workspacePath) {
   safeCopyIfMissing(
     path.join(srcAssetsDir, "models", "triangle.gltf"),
     path.join(modelsDir, "triangle.gltf")
+  );
+
+  safeCopyIfMissing(
+    path.join(srcAssetsDir, "fonts", "RobotoMono-VariableFont_wght.ttf"),
+    path.join(fontsDir, "RobotoMono-VariableFont_wght.ttf")
+  );
+  safeCopyIfMissing(
+    path.join(srcAssetsDir, "fonts", "RobotoMono-Italic-VariableFont_wght.ttf"),
+    path.join(fontsDir, "RobotoMono-Italic-VariableFont_wght.ttf")
   );
 }
 
