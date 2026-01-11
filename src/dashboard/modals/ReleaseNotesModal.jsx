@@ -135,17 +135,23 @@ export const ReleaseNotesModal = ({ isOpen, onClose }) => {
       <div className="flex flex-col gap-4">
         <div className="text-neutral-300/70">
           Current version:{" "}
-          <span className="text-neutral-300">{currentVersion || "unknown"}</span>
+          <span className="text-neutral-300">
+            {currentVersion || "unknown"}
+          </span>
         </div>
 
         {status === "loading" ? (
-          <div className="text-neutral-300/30 text-[11px]">Loading releases…</div>
+          <div className="text-neutral-300/30 text-[11px]">
+            Loading releases…
+          </div>
         ) : status === "error" ? (
           <div className="text-neutral-300/30 text-[11px]">
             Failed to load releases.
           </div>
         ) : releases.length === 0 ? (
-          <div className="text-neutral-300/30 text-[11px]">No releases found.</div>
+          <div className="text-neutral-300/30 text-[11px]">
+            No releases found.
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             {releases.map((r) => (
@@ -156,14 +162,18 @@ export const ReleaseNotesModal = ({ isOpen, onClose }) => {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-0.5">
                     <div className="text-neutral-300">
-                      <span className="opacity-50">{r.prerelease ? "[PRE] " : ""}</span>
+                      <span className="opacity-50">
+                        {r.prerelease ? "[PRE] " : ""}
+                      </span>
                       {r.tag}
                       {r.name ? (
                         <span className="opacity-50"> — {r.name}</span>
                       ) : null}
                     </div>
                     <div className="text-[10px] text-neutral-500">
-                      {r.publishedAt ? `Published: ${formatDate(r.publishedAt)}` : ""}
+                      {r.publishedAt
+                        ? `Published: ${formatDate(r.publishedAt)}`
+                        : ""}
                     </div>
                   </div>
                   <Button onClick={() => openExternal(r.url)}>OPEN</Button>
@@ -192,4 +202,3 @@ export const ReleaseNotesModal = ({ isOpen, onClose }) => {
     </Modal>
   );
 };
-

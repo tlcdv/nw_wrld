@@ -12,6 +12,7 @@ import { getActiveSetTracks } from "../../shared/utils/setUtils.js";
 import { HELP_TEXT } from "../../shared/helpText.js";
 import { useNameValidation } from "../core/hooks/useNameValidation.js";
 import { useTrackSlots } from "../core/hooks/useTrackSlots.js";
+import { parsePitchClass, pitchClassToName } from "../../shared/midi/midiUtils.js";
 
 export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
   const [userData, setUserData] = useAtom(userDataAtom);
@@ -23,6 +24,7 @@ export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
 
   const inputType = inputConfig?.type || "midi";
   const globalMappings = userData.config || {};
+  const maxTrackSlots = inputType === "midi" ? 12 : 10;
 
   const tracks = getActiveSetTracks(userData, activeSetId);
 
@@ -36,6 +38,17 @@ export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
   );
 
   const resolvedTrigger = getTrigger(trackSlot);
+  const resolvedNoteName =
+    inputType === "midi"
+      ? (() => {
+          const pc =
+            typeof resolvedTrigger === "number"
+              ? resolvedTrigger
+              : parsePitchClass(resolvedTrigger);
+          if (pc === null) return null;
+          return pitchClassToName(pc) || String(pc);
+        })()
+      : null;
 
   const takenSlotToTrackName = useMemo(() => {
     const map = new Map();
@@ -124,11 +137,25 @@ export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
             className="w-full py-1 font-mono"
           >
             {availableSlots.length === 0 && (
-              <option value="">No tracks available (max 10 tracks)</option>
+              <option value="">
+                No tracks available (max {maxTrackSlots} tracks)
+              </option>
             )}
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((slot) => {
+            {Array.from({ length: maxTrackSlots }, (_, i) => i + 1).map(
+              (slot) => {
+              const rawTrigger =
+                globalMappings.trackMappings?.[inputType]?.[slot] ?? "";
               const trigger =
-                globalMappings.trackMappings?.[inputType]?.[slot] || "";
+                inputType === "midi"
+                  ? (() => {
+                      const pc =
+                        typeof rawTrigger === "number"
+                          ? rawTrigger
+                          : parsePitchClass(rawTrigger);
+                      if (pc === null) return String(rawTrigger || "").trim();
+                      return pitchClassToName(pc) || String(pc);
+                    })()
+                  : rawTrigger;
               const takenBy = takenSlotToTrackName.get(slot) || "";
               const isTaken = Boolean(takenBy);
               return (
@@ -142,13 +169,19 @@ export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
                   {isTaken ? ` — used by ${takenBy}` : ""}
                 </option>
               );
-            })}
+            }
+            )}
           </Select>
-          {resolvedTrigger && (
-            <div className="text-green-500 text-[11px] mt-1 font-mono">
+          {inputType === "midi" && resolvedNoteName ? (
+            <div className="text-blue-500 text-[11px] mt-1 font-mono">
+              ✓ Will use trigger:{" "}
+              <span className="text-blue-500">{resolvedNoteName}</span>
+            </div>
+          ) : resolvedTrigger ? (
+            <div className="text-blue-500 text-[11px] mt-1 font-mono">
               ✓ Will use trigger: {resolvedTrigger}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

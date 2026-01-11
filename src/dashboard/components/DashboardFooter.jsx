@@ -23,7 +23,7 @@ export const DashboardFooter = ({
   const getStatusColor = () => {
     switch (inputStatus.status) {
       case "connected":
-        return "text-green-500";
+        return "text-blue-500";
       case "connecting":
         return "text-yellow-500";
       case "error":

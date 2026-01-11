@@ -362,7 +362,7 @@ export const AddModuleModal = ({
                         <div className="truncate">{module.name}</div>
                         {module.instancesOnCurrentTrack > 0 ? (
                           <div
-                            className="flex items-center gap-1 text-green-500/50"
+                            className="flex items-center gap-1 text-blue-500/50"
                             title={`${module.instancesOnCurrentTrack} instance${
                               module.instancesOnCurrentTrack > 1 ? "s" : ""
                             } on this track`}
@@ -406,7 +406,7 @@ export const AddModuleModal = ({
                           type="secondary"
                           icon={<FaCode />}
                           title="Edit code"
-                          className="text-blue-500/75"
+                          className="text-blue-500"
                         />
                         <Button
                           onClick={() => handleAddToTrack(module)}

@@ -28,13 +28,13 @@ export const HELP_TEXT = {
   midiChannels:
     "MIDI message channels used for external triggers. Track Select chooses which MIDI channel activates tracks; Triggers chooses which MIDI channel fires channel slots on the active track.",
   trackTrigger:
-    "The identifier that activates this track. For MIDI: use note names (C-1, F#2). For OSC: use /track/name pattern (e.g., /track/intro).",
+    "The identifier that activates this track. For MIDI: use pitch classes (C, F#, etc.) or numbers (0-11). For OSC: use /track/name pattern (e.g., /track/intro).",
   trackSlot:
-    "Choose a track number (1-10). The actual trigger is defined in Settings → Configure Mappings. This allows you to quickly change all your MIDI/OSC mappings globally.",
+    "Choose a track number. The actual trigger is defined in Settings → Configure Mappings. This allows you to quickly change all your MIDI/OSC mappings globally.",
   addChannel:
-    "Add a channel to trigger methods on this track's modules. For MIDI: use note names (E7-G8). For OSC: use /ch/name or /channel/name pattern (e.g., /ch/bass).",
+    "Add a channel to trigger methods on this track's modules. For MIDI: use pitch classes (C..B). For OSC: use /ch/name or /channel/name pattern (e.g., /ch/bass).",
   channelSlot:
-    "Choose a channel number (1-16). The actual trigger is defined in Settings → Configure Mappings. This allows consistent channel mapping across all tracks.",
+    "Choose a channel number (1-12). The actual trigger is defined in Settings → Configure Mappings. This allows consistent channel mapping across all tracks.",
   velocitySensitive:
     "When enabled, MIDI note velocity affects trigger intensity. When disabled, all triggers use maximum velocity (127).",
   oscPort:

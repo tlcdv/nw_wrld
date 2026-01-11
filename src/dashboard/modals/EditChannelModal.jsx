@@ -10,6 +10,10 @@ import { userDataAtom, activeSetIdAtom } from "../core/state.js";
 import { updateActiveSet } from "../core/utils.js";
 import { getActiveSetTracks } from "../../shared/utils/setUtils.js";
 import { HELP_TEXT } from "../../shared/helpText.js";
+import {
+  parsePitchClass,
+  pitchClassToName,
+} from "../../shared/midi/midiUtils.js";
 
 export const EditChannelModal = ({
   isOpen,
@@ -38,7 +42,7 @@ export const EditChannelModal = ({
 
   const availableChannelNumbers = useMemo(() => {
     const numbers = [];
-    for (let i = 1; i <= 16; i++) {
+    for (let i = 1; i <= 12; i++) {
       if (!existingChannelNumbers.has(i) || i === channelNumber) {
         numbers.push(i);
       }
@@ -48,9 +52,20 @@ export const EditChannelModal = ({
 
   const resolvedTrigger = useMemo(() => {
     return (
-      globalMappings.channelMappings?.[inputType]?.[newChannelNumber] || ""
+      globalMappings.channelMappings?.[inputType]?.[newChannelNumber] ?? ""
     );
   }, [newChannelNumber, inputType, globalMappings]);
+  const resolvedNoteName =
+    inputType === "midi"
+      ? (() => {
+          const pc =
+            typeof resolvedTrigger === "number"
+              ? resolvedTrigger
+              : parsePitchClass(resolvedTrigger);
+          if (pc === null) return null;
+          return pitchClassToName(pc) || String(pc);
+        })()
+      : null;
 
   useEffect(() => {
     if (!isOpen) {
@@ -116,8 +131,19 @@ export const EditChannelModal = ({
             className="w-full py-1 font-mono"
           >
             {availableChannelNumbers.map((num) => {
+              const rawTrigger =
+                globalMappings.channelMappings?.[inputType]?.[num] ?? "";
               const trigger =
-                globalMappings.channelMappings?.[inputType]?.[num] || "";
+                inputType === "midi"
+                  ? (() => {
+                      const pc =
+                        typeof rawTrigger === "number"
+                          ? rawTrigger
+                          : parsePitchClass(rawTrigger);
+                      if (pc === null) return String(rawTrigger || "").trim();
+                      return pitchClassToName(pc) || String(pc);
+                    })()
+                  : rawTrigger;
               return (
                 <option key={num} value={num} className="bg-[#101010]">
                   {config?.sequencerMode
@@ -132,11 +158,18 @@ export const EditChannelModal = ({
               Channel {newChannelNumber} is already used
             </div>
           )}
-          {!config?.sequencerMode && resolvedTrigger && (
-            <div className="text-green-500 text-[11px] mt-1 font-mono">
+          {!config?.sequencerMode &&
+          inputType === "midi" &&
+          resolvedNoteName ? (
+            <div className="text-blue-500 text-[11px] mt-1 font-mono">
+              ✓ Will use trigger:{" "}
+              <span className="text-blue-500">{resolvedNoteName}</span>
+            </div>
+          ) : !config?.sequencerMode && resolvedTrigger ? (
+            <div className="text-blue-500 text-[11px] mt-1 font-mono">
               ✓ Will use trigger: {resolvedTrigger}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

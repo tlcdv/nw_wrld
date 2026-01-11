@@ -10,16 +10,18 @@ const DEFAULT_INPUT_CONFIG = {
 const DEFAULT_GLOBAL_MAPPINGS = {
   trackMappings: {
     midi: {
-      1: "C-1",
-      2: "C#-1",
-      3: "D-1",
-      4: "D#-1",
-      5: "E-1",
-      6: "F-1",
-      7: "F#-1",
-      8: "G-1",
-      9: "G#-1",
-      10: "A-1",
+      1: 0,
+      2: 1,
+      3: 2,
+      4: 3,
+      5: 4,
+      6: 5,
+      7: 6,
+      8: 7,
+      9: 8,
+      10: 9,
+      11: 10,
+      12: 11,
     },
     osc: {
       1: "/track/1",
@@ -36,22 +38,18 @@ const DEFAULT_GLOBAL_MAPPINGS = {
   },
   channelMappings: {
     midi: {
-      1: "E7",
-      2: "F7",
-      3: "F#7",
-      4: "G7",
-      5: "G#7",
-      6: "A7",
-      7: "A#7",
-      8: "B7",
-      9: "C8",
-      10: "C#8",
-      11: "D8",
-      12: "D#8",
-      13: "E8",
-      14: "F8",
-      15: "F#8",
-      16: "G8",
+      1: 0,
+      2: 1,
+      3: 2,
+      4: 3,
+      5: 4,
+      6: 5,
+      7: 6,
+      8: 7,
+      9: 8,
+      10: 9,
+      11: 10,
+      12: 11,
     },
     osc: {
       1: "/ch/1",
@@ -66,17 +64,13 @@ const DEFAULT_GLOBAL_MAPPINGS = {
       10: "/ch/10",
       11: "/ch/11",
       12: "/ch/12",
-      13: "/ch/13",
-      14: "/ch/14",
-      15: "/ch/15",
-      16: "/ch/16",
     },
   },
 };
 
 const DEFAULT_USER_DATA = {
   config: {
-    activeSetId: null,
+    activeSetId: "set_1",
     activeTrackId: null,
     input: DEFAULT_INPUT_CONFIG,
     trackMappings: DEFAULT_GLOBAL_MAPPINGS.trackMappings,
@@ -84,7 +78,13 @@ const DEFAULT_USER_DATA = {
     sequencerMode: true,
     sequencerBpm: 120,
   },
-  sets: [],
+  sets: [
+    {
+      id: "set_1",
+      name: "Set 1",
+      tracks: [],
+    },
+  ],
 };
 
 module.exports = {

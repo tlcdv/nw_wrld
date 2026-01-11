@@ -11,7 +11,11 @@ import {
   random,
 } from "lodash";
 import { loadJsonFileSync } from "../shared/json/jsonFileBase.js";
-import { buildMidiConfig } from "../shared/midi/midiUtils.js";
+import {
+  buildMidiConfig,
+  noteNumberToPitchClass,
+  pitchClassToName,
+} from "../shared/midi/midiUtils.js";
 import { loadSettingsSync } from "../shared/json/configUtils.js";
 import { getActiveSetTracks, migrateToSets } from "../shared/utils/setUtils.js";
 import { buildMethodOptions } from "../shared/utils/methodOptions.js";
@@ -524,6 +528,15 @@ const Projector = {
       const { type, data } = payload;
       const debugEnabled = logger.debugEnabled;
 
+      const isSequencerMode = this.config?.sequencerMode === true;
+      const selectedInputType = this.config?.input?.type || "midi";
+      if (isSequencerMode) {
+        return;
+      }
+      if (data?.source && data.source !== selectedInputType) {
+        return;
+      }
+
       if (debugEnabled) {
         logger.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         logger.log(`🎵 [INPUT] Event type: ${type}, source: ${data.source}`);
@@ -537,7 +550,9 @@ const Projector = {
           if (debugEnabled) logger.log("🎯 [INPUT] Track selection event...");
 
           if (data.source === "midi") {
-            const trackNameFromNote = midiConfig.trackTriggersMap[data.note];
+            const pc = noteNumberToPitchClass(data.note);
+            const trackNameFromNote =
+              pc !== null ? midiConfig.trackTriggersMap[pc] : null;
             if (debugEnabled) {
               logger.log(
                 `🎯 [INPUT] Note ${data.note} maps to track:`,
@@ -608,7 +623,8 @@ const Projector = {
             const trackMappings = midiConfig.channelMappings[activeTrackName];
 
             if (data.source === "midi") {
-              const mappedChannels = trackMappings[data.note];
+              const pc = noteNumberToPitchClass(data.note);
+              const mappedChannels = pc !== null ? trackMappings[pc] : null;
               if (mappedChannels) {
                 channelNames = Array.isArray(mappedChannels)
                   ? mappedChannels
@@ -676,7 +692,11 @@ const Projector = {
         const source = data.source === "midi" ? "MIDI" : "OSC";
         let log = `[${timeStr}] ${source} Event\n`;
         if (data.source === "midi") {
-          log += `  Note: ${data.note}\n`;
+          const pc = noteNumberToPitchClass(data.note);
+          const pcName = pc !== null ? pitchClassToName(pc) : null;
+          log += `  Note: ${data.note}${
+            pc !== null ? ` (pitchClass: ${pc} ${pcName || ""})` : ""
+          }\n`;
           log += `  Channel: ${data.channel}\n`;
         } else if (data.source === "osc") {
           log += `  Address: ${data.address}\n`;

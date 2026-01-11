@@ -49,6 +49,64 @@ export const NOTE_OFFSETS = {
   B: 11,
 };
 
+const PITCH_CLASS_NAMES_SHARP = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
+
+export function noteNumberToPitchClass(noteNumber) {
+  if (typeof noteNumber !== "number" || Number.isNaN(noteNumber)) return null;
+  const n = Math.trunc(noteNumber);
+  if (n < 0 || n > 127) return null;
+  return ((n % 12) + 12) % 12;
+}
+
+export function pitchClassToName(pitchClass) {
+  if (typeof pitchClass !== "number" || Number.isNaN(pitchClass)) return null;
+  const pc = Math.trunc(pitchClass);
+  if (pc < 0 || pc > 11) return null;
+  return PITCH_CLASS_NAMES_SHARP[pc] || null;
+}
+
+export function noteNameToPitchClass(noteName) {
+  if (typeof noteName !== "string") return null;
+  const trimmed = noteName.trim();
+  if (!trimmed) return null;
+  // Accept "G", "G#", "Gb", "G7", "G#7", "Gb7" (octave ignored if present)
+  const match = trimmed.match(/^([A-G](?:#|b)?)(?:-?\d+)?$/);
+  if (!match) return null;
+  const note = match[1];
+  const semitone = NOTE_OFFSETS[note];
+  if (semitone === undefined) return null;
+  return semitone;
+}
+
+export function parsePitchClass(input) {
+  if (typeof input === "number") {
+    const pc = Math.trunc(input);
+    return pc >= 0 && pc <= 11 ? pc : null;
+  }
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  // Numeric pitch class (0..11)
+  if (/^\d+$/.test(trimmed)) {
+    const n = parseInt(trimmed, 10);
+    return Number.isFinite(n) && n >= 0 && n <= 11 ? n : null;
+  }
+  return noteNameToPitchClass(trimmed);
+}
+
 export function noteNameToNumber(noteName) {
   if (typeof noteName !== "string") return null;
   const match = noteName.trim().match(/^([A-G](?:#|b)?)(-?\d+)$/);
@@ -102,9 +160,16 @@ export function buildTrackNotesMapFromTracks(
       globalMappings
     );
 
-    if (track && trackTrigger && track.id && currentInputType === "midi") {
-      const num = noteNameToNumber(trackTrigger);
-      if (num !== null) map[num] = track.id;
+    if (
+      track &&
+      trackTrigger !== "" &&
+      trackTrigger !== null &&
+      trackTrigger !== undefined &&
+      track.id &&
+      currentInputType === "midi"
+    ) {
+      const pc = parsePitchClass(trackTrigger);
+      if (pc !== null) map[pc] = track.id;
     }
   });
 
@@ -133,10 +198,15 @@ export function buildMidiConfig(
     );
 
     // Build track triggers map
-    if (trackTrigger && track.name) {
+    if (
+      track.name &&
+      trackTrigger !== "" &&
+      trackTrigger !== null &&
+      trackTrigger !== undefined
+    ) {
       if (currentInputType === "midi") {
-        const num = noteNameToNumber(trackTrigger);
-        if (num !== null) config.trackTriggersMap[num] = track.name;
+        const pc = parsePitchClass(trackTrigger);
+        if (pc !== null) config.trackTriggersMap[pc] = track.name;
       } else {
         config.trackTriggersMap[trackTrigger] = track.name;
       }
@@ -157,11 +227,16 @@ export function buildMidiConfig(
                 )
               : slotOrTrigger;
 
-          if (channelTrigger) {
+          if (
+            channelTrigger !== "" &&
+            channelTrigger !== null &&
+            channelTrigger !== undefined
+          ) {
             let key = channelTrigger;
             if (currentInputType === "midi") {
-              const num = noteNameToNumber(channelTrigger);
-              if (num !== null) key = num;
+              const pc = parsePitchClass(channelTrigger);
+              if (pc !== null) key = pc;
+              else return;
             }
 
             if (!config.channelMappings[track.name][key]) {

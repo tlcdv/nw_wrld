@@ -87,11 +87,17 @@ const getUserDataPath = () => {
 const loadUserData = async () => {
   const defaultData = {
     config: {
-      activeSetId: null,
+      activeSetId: "set_1",
       trackMappings: DEFAULT_GLOBAL_MAPPINGS.trackMappings,
       channelMappings: DEFAULT_GLOBAL_MAPPINGS.channelMappings,
     },
-    sets: [],
+    sets: [
+      {
+        id: "set_1",
+        name: "Set 1",
+        tracks: [],
+      },
+    ],
     _isDefaultData: true,
   };
 

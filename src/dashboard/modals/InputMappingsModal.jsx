@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAtom } from "jotai";
 import { Modal } from "../shared/Modal.jsx";
 import { ModalHeader } from "../components/ModalHeader.js";
-import { TextInput, RadioButton } from "../components/FormInputs.js";
+import { TextInput, RadioButton, Select } from "../components/FormInputs.js";
 import { userDataAtom } from "../core/state.js";
 import { updateUserData } from "../core/utils.js";
 import { DEFAULT_GLOBAL_MAPPINGS } from "../../shared/config/defaultConfig.js";
+import { parsePitchClass, pitchClassToName } from "../../shared/midi/midiUtils.js";
 
 export const InputMappingsModal = ({ isOpen, onClose }) => {
   const [userData, setUserData] = useAtom(userDataAtom);
@@ -27,6 +28,8 @@ export const InputMappingsModal = ({ isOpen, onClose }) => {
 
   const trackMappings = userData.config?.trackMappings || {};
   const channelMappings = userData.config?.channelMappings || {};
+  const trackSlots = activeTab === "midi" ? 12 : 10;
+  const triggerSlots = 12;
 
   const updateTrackMapping = (slot, value) => {
     updateUserData(setUserData, (draft) => {
@@ -47,6 +50,11 @@ export const InputMappingsModal = ({ isOpen, onClose }) => {
   };
 
   if (!isOpen) return null;
+
+  const pitchClassOptions = Array.from({ length: 12 }).map((_, pc) => {
+    const name = pitchClassToName(pc) || String(pc);
+    return { value: pc, label: name };
+  });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="large">
@@ -92,46 +100,95 @@ export const InputMappingsModal = ({ isOpen, onClose }) => {
         <div className="flex flex-col gap-6">
           <div>
             <div className="text-neutral-300 text-[11px] mb-3 font-mono">
-              Track Trigger Mappings (1-10):
+              Track Trigger Mappings (1-{trackSlots}):
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((slot) => (
+              {Array.from({ length: trackSlots }, (_, i) => i + 1).map(
+                (slot) => (
                 <div key={slot} className="flex items-center gap-2">
                   <span className="text-neutral-500 text-[11px] font-mono w-12">
                     Track {slot}:
                   </span>
-                  <TextInput
-                    value={trackMappings[activeTab]?.[slot] || ""}
-                    onChange={(e) => updateTrackMapping(slot, e.target.value)}
-                    className="flex-1 text-[11px]"
-                    placeholder={
-                      activeTab === "midi" ? "C-1" : `/track/${slot}`
-                    }
-                  />
+                  {activeTab === "midi" ? (
+                    <Select
+                      value={(() => {
+                        const current = trackMappings[activeTab]?.[slot];
+                        if (typeof current === "number") return String(current);
+                        const pc = parsePitchClass(current);
+                        return pc === null ? "" : String(pc);
+                      })()}
+                      onChange={(e) =>
+                        updateTrackMapping(slot, parseInt(e.target.value, 10))
+                      }
+                      className="flex-1 text-[11px]"
+                    >
+                      <option value="" disabled>
+                        select pitch class…
+                      </option>
+                      {pitchClassOptions.map((opt) => (
+                        <option key={opt.value} value={String(opt.value)}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <TextInput
+                      value={trackMappings[activeTab]?.[slot] ?? ""}
+                      onChange={(e) => updateTrackMapping(slot, e.target.value)}
+                      className="flex-1 text-[11px]"
+                      placeholder={`/track/${slot}`}
+                    />
+                  )}
                 </div>
-              ))}
+              )
+              )}
             </div>
           </div>
 
           <div>
             <div className="text-neutral-300 text-[11px] mb-3 font-mono">
-              Trigger Slot Mappings (1-16):
+              Trigger Slot Mappings (1-{triggerSlots}):
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(
+              {Array.from({ length: triggerSlots }, (_, i) => i + 1).map(
                 (slot) => (
                   <div key={slot} className="flex items-center gap-2">
                     <span className="text-neutral-500 text-[11px] font-mono w-12">
                       Ch {slot}:
                     </span>
-                    <TextInput
-                      value={channelMappings[activeTab]?.[slot] || ""}
-                      onChange={(e) =>
-                        updateChannelMapping(slot, e.target.value)
-                      }
-                      className="flex-1 text-[11px]"
-                      placeholder={activeTab === "midi" ? "E7" : `/ch/${slot}`}
-                    />
+                    {activeTab === "midi" ? (
+                      <Select
+                        value={(() => {
+                          const current = channelMappings[activeTab]?.[slot];
+                          if (typeof current === "number")
+                            return String(current);
+                          const pc = parsePitchClass(current);
+                          return pc === null ? "" : String(pc);
+                        })()}
+                        onChange={(e) =>
+                          updateChannelMapping(slot, parseInt(e.target.value, 10))
+                        }
+                        className="flex-1 text-[11px]"
+                      >
+                        <option value="" disabled>
+                          select pitch class…
+                        </option>
+                        {pitchClassOptions.map((opt) => (
+                          <option key={opt.value} value={String(opt.value)}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      <TextInput
+                        value={channelMappings[activeTab]?.[slot] ?? ""}
+                        onChange={(e) =>
+                          updateChannelMapping(slot, e.target.value)
+                        }
+                        className="flex-1 text-[11px]"
+                        placeholder={`/ch/${slot}`}
+                      />
+                    )}
                   </div>
                 )
               )}

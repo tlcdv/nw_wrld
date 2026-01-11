@@ -11,17 +11,18 @@ export const useTrackSlots = (tracks, globalMappings, inputType, excludeTrackId 
   }, [tracks, excludeTrackId]);
 
   const availableSlots = useMemo(() => {
+    const maxSlots = inputType === "midi" ? 12 : 10;
     const slots = [];
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= maxSlots; i++) {
       if (!usedSlots.has(i)) {
         slots.push(i);
       }
     }
     return slots;
-  }, [usedSlots]);
+  }, [usedSlots, inputType]);
 
   const getTrigger = useCallback((slot) => {
-    return globalMappings?.trackMappings?.[inputType]?.[slot] || "";
+    return globalMappings?.trackMappings?.[inputType]?.[slot] ?? "";
   }, [globalMappings, inputType]);
 
   const isSlotAvailable = useCallback((slot) => {

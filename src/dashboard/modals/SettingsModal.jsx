@@ -397,7 +397,7 @@ export const SettingsModal = ({
                     <div className="flex flex-col gap-3">
                       <div>
                         <div className="opacity-50 mb-1 text-[11px]">
-                          Track Select:
+                          Track Select MIDI channel:
                         </div>
                         <DraftIntInput
                           value={inputConfig.trackSelectionChannel ?? 1}
@@ -419,7 +419,7 @@ export const SettingsModal = ({
                       </div>
                       <div>
                         <div className="opacity-50 mb-1 text-[11px]">
-                          Method Triggers:
+                          Method Triggers MIDI channel:
                         </div>
                         <DraftIntInput
                           value={inputConfig.methodTriggerChannel ?? 2}

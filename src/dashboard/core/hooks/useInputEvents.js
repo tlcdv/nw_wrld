@@ -4,7 +4,9 @@ import {
   setRecordingForTrack,
 } from "../../../shared/json/recordingUtils.js";
 import {
-  noteNameToNumber,
+  noteNumberToPitchClass,
+  parsePitchClass,
+  pitchClassToName,
   resolveChannelTrigger,
 } from "../../../shared/midi/midiUtils.js";
 import { getActiveSetTracks } from "../../../shared/utils/setUtils.js";
@@ -35,7 +37,13 @@ export const useInputEvents = ({
     const inputType = globalMappings.input?.type || "midi";
     const { buildMidiConfig } = require("../../../shared/midi/midiUtils.js");
     triggerMapsRef.current = buildMidiConfig(tracks, globalMappings, inputType);
-  }, [userData?.sets, userData?.config?.input, activeSetId]);
+  }, [
+    userData?.sets,
+    userData?.config?.input,
+    userData?.config?.trackMappings,
+    userData?.config?.channelMappings,
+    activeSetId,
+  ]);
 
   useIPCListener("input-status", (event, statusPayload) => {
     setInputStatus(statusPayload.data);
@@ -90,11 +98,17 @@ export const useInputEvents = ({
     let log = `[${timeStr}] ${sourceLabel} ${eventTypeLabel}\n`;
 
     if (source === "midi") {
+      const pc = noteNumberToPitchClass(data.note);
+      const pcName = pc !== null ? pitchClassToName(pc) : null;
       if (type === "track-selection") {
-        log += `  Note: ${data.note}\n`;
+        log += `  Note: ${data.note}${
+          pc !== null ? ` (pitchClass: ${pc} ${pcName || ""})` : ""
+        }\n`;
         log += `  Channel: ${data.channel || 1}\n`;
       } else {
-        log += `  Note: ${data.note}\n`;
+        log += `  Note: ${data.note}${
+          pc !== null ? ` (pitchClass: ${pc} ${pcName || ""})` : ""
+        }\n`;
         log += `  Channel: ${data.channel}\n`;
       }
     } else if (source === "osc") {
@@ -132,6 +146,16 @@ export const useInputEvents = ({
       const { type, data } = payload;
       const timestamp = data.timestamp || performance.now() / 1000;
 
+      const activeConfig = userDataRef.current?.config || {};
+      const isSequencerMode = activeConfig?.sequencerMode === true;
+      const selectedInputType = activeConfig?.input?.type || "midi";
+      if (isSequencerMode) {
+        return;
+      }
+      if (data?.source && data.source !== selectedInputType) {
+        return;
+      }
+
       const tracks = getActiveSetTracks(
         userDataRef.current || {},
         activeSetIdRef.current
@@ -146,8 +170,9 @@ export const useInputEvents = ({
           let resolvedTrackName = null;
 
           if (data.source === "midi") {
+            const pc = noteNumberToPitchClass(data.note);
             resolvedTrackName =
-              triggerMapsRef.current.trackTriggersMap[data.note];
+              pc !== null ? triggerMapsRef.current.trackTriggersMap[pc] : null;
           } else if (data.source === "osc") {
             resolvedTrackName =
               triggerMapsRef.current.trackTriggersMap[data.identifier];
@@ -208,7 +233,8 @@ export const useInputEvents = ({
             const currentInputType = globalMappings.input?.type || "midi";
 
             if (data.source === "midi") {
-              const trigger = data.note;
+              const triggerPc = noteNumberToPitchClass(data.note);
+              if (triggerPc === null) break;
               Object.entries(activeTrack.channelMappings).forEach(
                 ([channelNumber, slotNumber]) => {
                   const resolvedTrigger = resolveChannelTrigger(
@@ -216,8 +242,11 @@ export const useInputEvents = ({
                     currentInputType,
                     globalMappings
                   );
-                  const triggerNum = noteNameToNumber(resolvedTrigger);
-                  if (triggerNum === trigger) {
+                  const resolvedPc =
+                    typeof resolvedTrigger === "number"
+                      ? resolvedTrigger
+                      : parsePitchClass(resolvedTrigger);
+                  if (resolvedPc === triggerPc) {
                     channelsToFlash.push(channelNumber);
                   }
                 }

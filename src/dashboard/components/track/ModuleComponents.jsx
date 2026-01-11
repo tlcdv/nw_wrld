@@ -27,6 +27,8 @@ import {
 import {
   resolveTrackTrigger,
   resolveChannelTrigger,
+  parsePitchClass,
+  pitchClassToName,
 } from "../../../shared/midi/midiUtils.js";
 import { Button } from "../Button.js";
 import { FaPlus } from "react-icons/fa";
@@ -53,6 +55,23 @@ export const ModuleSelector = React.memo(
       currentInputType,
       globalMappings
     );
+    const resolvedNoteName = useMemo(() => {
+      if (currentInputType !== "midi") return resolvedTrigger;
+      if (
+        resolvedTrigger === "" ||
+        resolvedTrigger === null ||
+        resolvedTrigger === undefined
+      ) {
+        return resolvedTrigger;
+      }
+      const pc =
+        typeof resolvedTrigger === "number"
+          ? resolvedTrigger
+          : parsePitchClass(resolvedTrigger);
+      if (pc === null) return resolvedTrigger;
+      const name = pitchClassToName(pc);
+      return name || String(pc);
+    }, [resolvedTrigger, currentInputType]);
     const isSequencerMode = userData.config?.sequencerMode || false;
 
     return (
@@ -62,9 +81,17 @@ export const ModuleSelector = React.memo(
             <span>[TRACK]</span>{" "}
             <span className="">
               {track.name}
-              {!isSequencerMode && resolvedTrigger
-                ? ` (${resolvedTrigger})`
-                : ""}
+              {!isSequencerMode &&
+              resolvedNoteName !== "" &&
+              resolvedNoteName !== null &&
+              resolvedNoteName !== undefined ? (
+                <>
+                  {" "}
+                  [<span className="text-blue-500">{resolvedNoteName}</span>]
+                </>
+              ) : (
+                ""
+              )}
             </span>
           </span>
         </div>
@@ -471,9 +498,40 @@ export const NoteSelector = React.memo(
                         currentInputType,
                         globalMappings
                       );
-                      return resolvedChannelTrigger
-                        ? `Channel ${channel.number} (${resolvedChannelTrigger})`
-                        : `Channel ${channel.number}`;
+                      if (
+                        resolvedChannelTrigger === "" ||
+                        resolvedChannelTrigger === null ||
+                        resolvedChannelTrigger === undefined
+                      ) {
+                        return `Channel ${channel.number}`;
+                      }
+                      if (currentInputType === "midi") {
+                        const pc =
+                          typeof resolvedChannelTrigger === "number"
+                            ? resolvedChannelTrigger
+                            : parsePitchClass(resolvedChannelTrigger);
+                        const name = pc !== null ? pitchClassToName(pc) : null;
+                        return name ? (
+                          <span
+                            className={
+                              isFlashing ? "text-red-500" : "text-blue-500"
+                            }
+                          >
+                            {name}
+                          </span>
+                        ) : (
+                          `Channel ${channel.number}`
+                        );
+                      }
+                      return (
+                        <span
+                          className={
+                            isFlashing ? "text-red-500" : "text-blue-500"
+                          }
+                        >
+                          {String(resolvedChannelTrigger)}
+                        </span>
+                      );
                     })()}
                   </div>
                   <div className="flex-1">

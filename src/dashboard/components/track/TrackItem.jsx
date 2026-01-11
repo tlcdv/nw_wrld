@@ -67,7 +67,7 @@ export const TrackItem = React.memo(
       );
 
       let nextChannel = null;
-      for (let i = 1; i <= 16; i++) {
+      for (let i = 1; i <= 12; i++) {
         if (!existingChannelNumbers.has(i)) {
           nextChannel = i;
           break;
@@ -75,7 +75,7 @@ export const TrackItem = React.memo(
       }
 
       if (!nextChannel) {
-        alert("All 16 channels are already in use.");
+        alert("All 12 channels are already in use.");
         return;
       }
 
