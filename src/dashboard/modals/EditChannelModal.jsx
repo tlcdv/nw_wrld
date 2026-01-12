@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useAtom } from "jotai";
 import { Modal } from "../shared/Modal.jsx";
 import { ModalHeader } from "../components/ModalHeader.js";
@@ -7,12 +7,13 @@ import { Button } from "../components/Button.js";
 import { Select, Label } from "../components/FormInputs.js";
 import { HelpIcon } from "../components/HelpIcon.js";
 import { userDataAtom, activeSetIdAtom } from "../core/state.js";
-import { updateActiveSet } from "../core/utils.js";
+import { updateActiveSet, updateUserData } from "../core/utils.js";
 import { getActiveSetTracks } from "../../shared/utils/setUtils.js";
 import { HELP_TEXT } from "../../shared/helpText.js";
 import {
   parsePitchClass,
   pitchClassToName,
+  resolveChannelTrigger,
 } from "../../shared/midi/midiUtils.js";
 
 export const EditChannelModal = ({
@@ -30,7 +31,36 @@ export const EditChannelModal = ({
   const tracks = getActiveSetTracks(userData, activeSetId);
   const track = tracks[trackIndex];
   const inputType = inputConfig?.type || "midi";
+  const noteMatchMode =
+    inputConfig?.noteMatchMode === "exactNote" ? "exactNote" : "pitchClass";
   const globalMappings = userData.config || {};
+
+  const exactNoteOptions = useMemo(
+    () =>
+      Array.from({ length: 128 }, (_, n) => ({ value: n, label: String(n) })),
+    []
+  );
+
+  const updateExactNoteMappingForSlot = useCallback(
+    (slot, noteNumber) => {
+      const n = parseInt(String(noteNumber ?? ""), 10);
+      if (!Number.isFinite(n) || n < 0 || n > 127) return;
+      updateUserData(setUserData, (draft) => {
+        if (!draft.config) draft.config = {};
+        if (!draft.config.input) draft.config.input = {};
+        draft.config.input.noteMatchMode = "exactNote";
+        if (!draft.config.channelMappings) draft.config.channelMappings = {};
+        if (!draft.config.channelMappings.midi) {
+          draft.config.channelMappings.midi = { pitchClass: {}, exactNote: {} };
+        }
+        if (!draft.config.channelMappings.midi.exactNote) {
+          draft.config.channelMappings.midi.exactNote = {};
+        }
+        draft.config.channelMappings.midi.exactNote[slot] = n;
+      });
+    },
+    [setUserData]
+  );
 
   const existingChannelNumbers = useMemo(() => {
     return new Set(
@@ -51,13 +81,15 @@ export const EditChannelModal = ({
   }, [existingChannelNumbers, channelNumber]);
 
   const resolvedTrigger = useMemo(() => {
-    return (
-      globalMappings.channelMappings?.[inputType]?.[newChannelNumber] ?? ""
-    );
+    return resolveChannelTrigger(newChannelNumber, inputType, globalMappings);
   }, [newChannelNumber, inputType, globalMappings]);
   const resolvedNoteName =
     inputType === "midi"
       ? (() => {
+          if (noteMatchMode === "exactNote") {
+            const s = String(resolvedTrigger ?? "").trim();
+            return s ? s : null;
+          }
           const pc =
             typeof resolvedTrigger === "number"
               ? resolvedTrigger
@@ -66,6 +98,40 @@ export const EditChannelModal = ({
           return pitchClassToName(pc) || String(pc);
         })()
       : null;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (config?.sequencerMode) return;
+    if (inputType !== "midi") return;
+    if (noteMatchMode !== "exactNote") return;
+    const slot = newChannelNumber;
+    if (!slot) return;
+    const current =
+      globalMappings?.channelMappings?.midi?.exactNote?.[slot] ?? null;
+    const n = typeof current === "number" ? current : null;
+    const usedByOtherSlots = new Set(
+      Object.entries(globalMappings?.channelMappings?.midi?.exactNote || {})
+        .filter(([s]) => parseInt(s, 10) !== slot)
+        .map(([, v]) => v)
+        .filter((v) => typeof v === "number" && v >= 0 && v <= 127)
+    );
+    const isValid = typeof n === "number" && n >= 0 && n <= 127;
+    const isUnique = isValid && !usedByOtherSlots.has(n);
+    if (isUnique) return;
+    const pick = Array.from({ length: 128 }, (_, x) => x).find(
+      (x) => !usedByOtherSlots.has(x)
+    );
+    if (pick === undefined) return;
+    updateExactNoteMappingForSlot(slot, pick);
+  }, [
+    isOpen,
+    config?.sequencerMode,
+    inputType,
+    noteMatchMode,
+    newChannelNumber,
+    globalMappings,
+    updateExactNoteMappingForSlot,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -131,11 +197,21 @@ export const EditChannelModal = ({
             className="w-full py-1 font-mono"
           >
             {availableChannelNumbers.map((num) => {
-              const rawTrigger =
-                globalMappings.channelMappings?.[inputType]?.[num] ?? "";
+              const rawTrigger = resolveChannelTrigger(
+                num,
+                inputType,
+                globalMappings
+              );
               const trigger =
                 inputType === "midi"
                   ? (() => {
+                      const noteMatchMode =
+                        inputConfig?.noteMatchMode === "exactNote"
+                          ? "exactNote"
+                          : "pitchClass";
+                      if (noteMatchMode === "exactNote") {
+                        return String(rawTrigger || "").trim();
+                      }
                       const pc =
                         typeof rawTrigger === "number"
                           ? rawTrigger
@@ -171,6 +247,52 @@ export const EditChannelModal = ({
             </div>
           ) : null}
         </div>
+
+        {!config?.sequencerMode &&
+        inputType === "midi" &&
+        noteMatchMode === "exactNote" ? (
+          <div>
+            <Label>Trigger Note (0–127)</Label>
+            <Select
+              value={String(
+                globalMappings?.channelMappings?.midi?.exactNote?.[
+                  newChannelNumber
+                ] ?? 0
+              )}
+              onChange={(e) =>
+                updateExactNoteMappingForSlot(
+                  newChannelNumber,
+                  parseInt(e.target.value, 10)
+                )
+              }
+              className="w-full py-1 font-mono"
+            >
+              {exactNoteOptions.map((opt) => {
+                const selected =
+                  globalMappings?.channelMappings?.midi?.exactNote?.[
+                    newChannelNumber
+                  ];
+                const usedByOtherSlot = Object.entries(
+                  globalMappings?.channelMappings?.midi?.exactNote || {}
+                ).some(([s, v]) => {
+                  if (parseInt(s, 10) === newChannelNumber) return false;
+                  return v === opt.value;
+                });
+                const disabled = usedByOtherSlot && opt.value !== selected;
+                return (
+                  <option
+                    key={opt.value}
+                    value={String(opt.value)}
+                    disabled={disabled}
+                    className="bg-[#101010]"
+                  >
+                    {opt.label}
+                  </option>
+                );
+              })}
+            </Select>
+          </div>
+        ) : null}
       </div>
 
       <ModalFooter>

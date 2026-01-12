@@ -71,6 +71,18 @@ export function noteNumberToPitchClass(noteNumber) {
   return ((n % 12) + 12) % 12;
 }
 
+export function normalizeNoteMatchMode(noteMatchMode) {
+  return noteMatchMode === "exactNote" ? "exactNote" : "pitchClass";
+}
+
+export function noteNumberToTriggerKey(noteNumber, noteMatchMode) {
+  if (typeof noteNumber !== "number" || Number.isNaN(noteNumber)) return null;
+  const n = Math.trunc(noteNumber);
+  if (n < 0 || n > 127) return null;
+  const mode = normalizeNoteMatchMode(noteMatchMode);
+  return mode === "exactNote" ? n : noteNumberToPitchClass(n);
+}
+
 export function pitchClassToName(pitchClass) {
   if (typeof pitchClass !== "number" || Number.isNaN(pitchClass)) return null;
   const pc = Math.trunc(pitchClass);
@@ -107,6 +119,40 @@ export function parsePitchClass(input) {
   return noteNameToPitchClass(trimmed);
 }
 
+export function parseMidiTriggerValue(input, noteMatchMode) {
+  const mode = normalizeNoteMatchMode(noteMatchMode);
+  if (mode === "exactNote") {
+    if (typeof input === "number") {
+      const n = Math.trunc(input);
+      return n >= 0 && n <= 127 ? n : null;
+    }
+    if (typeof input !== "string") return null;
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+    if (!/^\d+$/.test(trimmed)) return null;
+    const n = parseInt(trimmed, 10);
+    return Number.isFinite(n) && n >= 0 && n <= 127 ? n : null;
+  }
+
+  if (typeof input === "number") {
+    const n = Math.trunc(input);
+    if (n >= 0 && n <= 11) return n;
+    if (n >= 0 && n <= 127) return noteNumberToPitchClass(n);
+    return null;
+  }
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  if (/^\d+$/.test(trimmed)) {
+    const n = parseInt(trimmed, 10);
+    if (!Number.isFinite(n)) return null;
+    if (n >= 0 && n <= 11) return n;
+    if (n >= 0 && n <= 127) return noteNumberToPitchClass(n);
+    return null;
+  }
+  return noteNameToPitchClass(trimmed);
+}
+
 export function noteNameToNumber(noteName) {
   if (typeof noteName !== "string") return null;
   const match = noteName.trim().match(/^([A-G](?:#|b)?)(-?\d+)$/);
@@ -131,6 +177,16 @@ export function buildChannelNotesMap() {
 
 export function resolveTrackTrigger(track, inputType, globalMappings) {
   if (track?.trackSlot && globalMappings?.trackMappings?.[inputType]) {
+    if (inputType === "midi") {
+      const mode = normalizeNoteMatchMode(globalMappings?.input?.noteMatchMode);
+      const midiMappings = globalMappings.trackMappings.midi;
+      if (midiMappings && typeof midiMappings === "object") {
+        const byMode = midiMappings?.[mode];
+        if (byMode && typeof byMode === "object") {
+          return byMode[track.trackSlot];
+        }
+      }
+    }
     return globalMappings.trackMappings[inputType][track.trackSlot];
   }
   return track?.trackTrigger || track?.trackNote || "";
@@ -138,6 +194,16 @@ export function resolveTrackTrigger(track, inputType, globalMappings) {
 
 export function resolveChannelTrigger(channelSlot, inputType, globalMappings) {
   if (channelSlot && globalMappings?.channelMappings?.[inputType]) {
+    if (inputType === "midi") {
+      const mode = normalizeNoteMatchMode(globalMappings?.input?.noteMatchMode);
+      const midiMappings = globalMappings.channelMappings.midi;
+      if (midiMappings && typeof midiMappings === "object") {
+        const byMode = midiMappings?.[mode];
+        if (byMode && typeof byMode === "object") {
+          return byMode[channelSlot];
+        }
+      }
+    }
     return globalMappings.channelMappings[inputType][channelSlot];
   }
   return "";
@@ -190,6 +256,10 @@ export function buildMidiConfig(
     return config;
   }
 
+  const noteMatchMode = normalizeNoteMatchMode(
+    globalMappings?.input?.noteMatchMode
+  );
+
   userData.forEach((track) => {
     const trackTrigger = resolveTrackTrigger(
       track,
@@ -205,8 +275,8 @@ export function buildMidiConfig(
       trackTrigger !== undefined
     ) {
       if (currentInputType === "midi") {
-        const pc = parsePitchClass(trackTrigger);
-        if (pc !== null) config.trackTriggersMap[pc] = track.name;
+        const key = parseMidiTriggerValue(trackTrigger, noteMatchMode);
+        if (key !== null) config.trackTriggersMap[key] = track.name;
       } else {
         config.trackTriggersMap[trackTrigger] = track.name;
       }
@@ -234,8 +304,11 @@ export function buildMidiConfig(
           ) {
             let key = channelTrigger;
             if (currentInputType === "midi") {
-              const pc = parsePitchClass(channelTrigger);
-              if (pc !== null) key = pc;
+              const nextKey = parseMidiTriggerValue(
+                channelTrigger,
+                noteMatchMode
+              );
+              if (nextKey !== null) key = nextKey;
               else return;
             }
 

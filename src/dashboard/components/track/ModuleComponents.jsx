@@ -506,6 +506,25 @@ export const NoteSelector = React.memo(
                         return `Channel ${channel.number}`;
                       }
                       if (currentInputType === "midi") {
+                        const noteMatchMode =
+                          globalMappings?.input?.noteMatchMode === "exactNote"
+                            ? "exactNote"
+                            : "pitchClass";
+                        if (noteMatchMode === "exactNote") {
+                          const label = String(resolvedChannelTrigger ?? "").trim();
+                          return label ? (
+                            <span
+                              className={
+                                isFlashing ? "text-red-500" : "text-blue-500"
+                              }
+                            >
+                              {label}
+                            </span>
+                          ) : (
+                            `Channel ${channel.number}`
+                          );
+                        }
+
                         const pc =
                           typeof resolvedChannelTrigger === "number"
                             ? resolvedChannelTrigger

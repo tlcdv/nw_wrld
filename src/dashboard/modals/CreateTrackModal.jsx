@@ -4,15 +4,27 @@ import { Modal } from "../shared/Modal.jsx";
 import { ModalHeader } from "../components/ModalHeader.js";
 import { ModalFooter } from "../components/ModalFooter.js";
 import { Button } from "../components/Button.js";
-import { TextInput, Select, Label, ValidationError } from "../components/FormInputs.js";
+import {
+  TextInput,
+  Select,
+  Label,
+  ValidationError,
+} from "../components/FormInputs.js";
 import { HelpIcon } from "../components/HelpIcon.js";
-import { userDataAtom, activeTrackIdAtom, activeSetIdAtom } from "../core/state.js";
+import {
+  userDataAtom,
+  activeTrackIdAtom,
+  activeSetIdAtom,
+} from "../core/state.js";
 import { updateActiveSet } from "../core/utils.js";
 import { getActiveSetTracks } from "../../shared/utils/setUtils.js";
 import { HELP_TEXT } from "../../shared/helpText.js";
 import { useNameValidation } from "../core/hooks/useNameValidation.js";
 import { useTrackSlots } from "../core/hooks/useTrackSlots.js";
-import { parsePitchClass, pitchClassToName } from "../../shared/midi/midiUtils.js";
+import {
+  parsePitchClass,
+  pitchClassToName,
+} from "../../shared/midi/midiUtils.js";
 
 export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
   const [userData, setUserData] = useAtom(userDataAtom);
@@ -23,6 +35,8 @@ export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const inputType = inputConfig?.type || "midi";
+  const noteMatchMode =
+    inputConfig?.noteMatchMode === "exactNote" ? "exactNote" : "pitchClass";
   const globalMappings = userData.config || {};
   const maxTrackSlots = inputType === "midi" ? 12 : 10;
 
@@ -143,33 +157,35 @@ export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
             )}
             {Array.from({ length: maxTrackSlots }, (_, i) => i + 1).map(
               (slot) => {
-              const rawTrigger =
-                globalMappings.trackMappings?.[inputType]?.[slot] ?? "";
-              const trigger =
-                inputType === "midi"
-                  ? (() => {
-                      const pc =
-                        typeof rawTrigger === "number"
-                          ? rawTrigger
-                          : parsePitchClass(rawTrigger);
-                      if (pc === null) return String(rawTrigger || "").trim();
-                      return pitchClassToName(pc) || String(pc);
-                    })()
-                  : rawTrigger;
-              const takenBy = takenSlotToTrackName.get(slot) || "";
-              const isTaken = Boolean(takenBy);
-              return (
-                <option
-                  key={slot}
-                  value={slot}
-                  className="bg-[#101010]"
-                  disabled={isTaken}
-                >
-                  Track {slot} ({trigger || "not configured"})
-                  {isTaken ? ` — used by ${takenBy}` : ""}
-                </option>
-              );
-            }
+                const rawTrigger = getTrigger(slot);
+                const trigger =
+                  inputType === "midi"
+                    ? noteMatchMode === "pitchClass"
+                      ? (() => {
+                          const pc =
+                            typeof rawTrigger === "number"
+                              ? rawTrigger
+                              : parsePitchClass(rawTrigger);
+                          if (pc === null)
+                            return String(rawTrigger || "").trim();
+                          return pitchClassToName(pc) || String(pc);
+                        })()
+                      : String(rawTrigger || "").trim()
+                    : rawTrigger;
+                const takenBy = takenSlotToTrackName.get(slot) || "";
+                const isTaken = Boolean(takenBy);
+                return (
+                  <option
+                    key={slot}
+                    value={slot}
+                    className="bg-[#101010]"
+                    disabled={isTaken}
+                  >
+                    Track {slot} ({trigger || "not configured"})
+                    {isTaken ? ` — used by ${takenBy}` : ""}
+                  </option>
+                );
+              }
             )}
           </Select>
           {inputType === "midi" && resolvedNoteName ? (
@@ -196,4 +212,3 @@ export const CreateTrackModal = ({ isOpen, onClose, inputConfig, onAlert }) => {
     </Modal>
   );
 };
-

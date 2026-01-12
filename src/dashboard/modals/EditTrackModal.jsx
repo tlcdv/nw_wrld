@@ -28,6 +28,7 @@ export const EditTrackModal = ({
   const tracks = getActiveSetTracks(userData, activeSetId);
   const track = tracks[trackIndex];
   const inputType = inputConfig?.type || "midi";
+  const noteMatchMode = inputConfig?.noteMatchMode === "exactNote" ? "exactNote" : "pitchClass";
   const globalMappings = userData.config || {};
   const maxTrackSlots = inputType === "midi" ? 12 : 10;
 
@@ -125,18 +126,19 @@ export const EditTrackModal = ({
           >
             {Array.from({ length: maxTrackSlots }, (_, i) => i + 1).map(
               (slot) => {
-              const rawTrigger =
-                globalMappings.trackMappings?.[inputType]?.[slot] ?? "";
+              const rawTrigger = getTrigger(slot);
               const trigger =
                 inputType === "midi"
-                  ? (() => {
-                      const pc =
-                        typeof rawTrigger === "number"
-                          ? rawTrigger
-                          : parsePitchClass(rawTrigger);
-                      if (pc === null) return String(rawTrigger || "").trim();
-                      return pitchClassToName(pc) || String(pc);
-                    })()
+                  ? noteMatchMode === "pitchClass"
+                    ? (() => {
+                        const pc =
+                          typeof rawTrigger === "number"
+                            ? rawTrigger
+                            : parsePitchClass(rawTrigger);
+                        if (pc === null) return String(rawTrigger || "").trim();
+                        return pitchClassToName(pc) || String(pc);
+                      })()
+                    : String(rawTrigger || "").trim()
                   : rawTrigger;
               const takenBy = takenSlotToTrackName.get(slot) || "";
               const isTaken = Boolean(takenBy);

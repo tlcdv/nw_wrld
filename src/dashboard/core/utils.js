@@ -1,6 +1,9 @@
 import { produce } from "immer";
 import { migrateToSets, getActiveSet } from "../../shared/utils/setUtils.js";
-import { DEFAULT_GLOBAL_MAPPINGS } from "../../shared/config/defaultConfig.js";
+import {
+  DEFAULT_GLOBAL_MAPPINGS,
+  DEFAULT_INPUT_CONFIG,
+} from "../../shared/config/defaultConfig.js";
 import {
   getJsonFilePath,
   loadJsonFile,
@@ -90,6 +93,7 @@ const loadUserData = async () => {
       activeSetId: "set_1",
       trackMappings: DEFAULT_GLOBAL_MAPPINGS.trackMappings,
       channelMappings: DEFAULT_GLOBAL_MAPPINGS.channelMappings,
+      input: DEFAULT_INPUT_CONFIG,
     },
     sets: [
       {
@@ -118,10 +122,44 @@ const loadUserData = async () => {
 
   if (!migratedData.config.trackMappings) {
     migratedData.config.trackMappings = DEFAULT_GLOBAL_MAPPINGS.trackMappings;
+  } else if (migratedData.config.trackMappings?.midi) {
+    const currentMidi = migratedData.config.trackMappings.midi;
+    if (
+      typeof currentMidi === "object" &&
+      currentMidi !== null &&
+      !("pitchClass" in currentMidi) &&
+      !("exactNote" in currentMidi)
+    ) {
+      migratedData.config.trackMappings.midi = {
+        pitchClass: currentMidi,
+        exactNote: { ...DEFAULT_GLOBAL_MAPPINGS.trackMappings.midi.exactNote },
+      };
+    }
   }
   if (!migratedData.config.channelMappings) {
     migratedData.config.channelMappings =
       DEFAULT_GLOBAL_MAPPINGS.channelMappings;
+  } else if (migratedData.config.channelMappings?.midi) {
+    const currentMidi = migratedData.config.channelMappings.midi;
+    if (
+      typeof currentMidi === "object" &&
+      currentMidi !== null &&
+      !("pitchClass" in currentMidi) &&
+      !("exactNote" in currentMidi)
+    ) {
+      migratedData.config.channelMappings.midi = {
+        pitchClass: currentMidi,
+        exactNote: { ...DEFAULT_GLOBAL_MAPPINGS.channelMappings.midi.exactNote },
+      };
+    }
+  }
+  if (!migratedData.config.input) {
+    migratedData.config.input = DEFAULT_INPUT_CONFIG;
+  } else {
+    migratedData.config.input = {
+      ...DEFAULT_INPUT_CONFIG,
+      ...migratedData.config.input,
+    };
   }
 
   migratedData._loadedSuccessfully = !Boolean(migratedData._isDefaultData);
@@ -174,49 +212,6 @@ const saveUserDataSync = (data) => {
   }
 };
 
-const generateTrackNotes = () => {
-  const channelNotes = [
-    "G8",
-    "F#8",
-    "F8",
-    "E8",
-    "D#8",
-    "D8",
-    "C#8",
-    "C8",
-    "B7",
-    "A#7",
-    "A7",
-    "G#7",
-    "G7",
-    "F#7",
-    "F7",
-    "E7",
-  ];
-
-  const noteNames = [
-    "C",
-    "C#",
-    "D",
-    "D#",
-    "E",
-    "F",
-    "F#",
-    "G",
-    "G#",
-    "A",
-    "A#",
-    "B",
-  ];
-  const octaves = [-1, 0, 1, 2];
-  const standardNotes = [];
-  octaves.forEach((oct) => {
-    noteNames.forEach((n) => standardNotes.push(`${n}${oct}`));
-  });
-
-  return [...channelNotes, ...standardNotes];
-};
-
 const updateActiveSet = (setUserData, activeSetId, updater) => {
   updateUserData(setUserData, (draft) => {
     const activeSet = getActiveSet(draft, activeSetId);
@@ -233,6 +228,5 @@ export {
   loadUserData,
   saveUserData,
   saveUserDataSync,
-  generateTrackNotes,
   updateActiveSet,
 };

@@ -20,6 +20,9 @@ const clampMidiChannel = (value, fallback = 1) => {
   return Math.max(1, Math.min(16, n));
 };
 
+const normalizeMidiNoteMatchMode = (value) =>
+  value === "exactNote" ? "exactNote" : "pitchClass";
+
 const normalizeHexColor = (value) => {
   const raw = String(value || "").trim();
   if (!raw) return null;
@@ -440,6 +443,35 @@ export const SettingsModal = ({
                         />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="pl-12">
+                    <div className="mb-1 text-[11px] relative inline-block">
+                      <span className="opacity-50">MIDI Note Match:</span>
+                      <HelpIcon helpText={HELP_TEXT.midiNoteMatchMode} />
+                    </div>
+                    <Select
+                      id="midiNoteMatchMode"
+                      value={normalizeMidiNoteMatchMode(
+                        inputConfig.noteMatchMode
+                      )}
+                      onChange={(e) =>
+                        setInputConfig({
+                          ...inputConfig,
+                          noteMatchMode: normalizeMidiNoteMatchMode(
+                            e.target.value
+                          ),
+                        })
+                      }
+                      className="py-1 w-full"
+                    >
+                      <option value="pitchClass" className="bg-[#101010]">
+                        Pitch Class (C..B)
+                      </option>
+                      <option value="exactNote" className="bg-[#101010]">
+                        Exact Note (0–127)
+                      </option>
+                    </Select>
                   </div>
 
                   <div className="pl-12">

@@ -18,7 +18,9 @@ export const ModalHeader = ({
         } ${containerClassName}`}
       >
         <span
-          className={`${uppercase ? "uppercase" : "normal-case"} text-neutral-300 relative inline-block ${titleClassName}`}
+          className={`${
+            uppercase ? "uppercase" : "normal-case"
+          } text-neutral-300 relative inline-block ${titleClassName}`}
         >
           {title}
         </span>

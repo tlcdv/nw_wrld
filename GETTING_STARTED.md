@@ -304,6 +304,7 @@ Once you're comfortable with the sequencer, you can connect external hardware fo
 Many DAWs send note events on **MIDI Channel 1** by default. nw_wrld lets you choose which MIDI channel controls track selection and which controls method/channel triggers:
 
 - **Simplest setup (one channel)**:
+
   - Set both **Track Select MIDI Channel** and **Method Triggers MIDI Channel** to `1`.
   - Use **Settings → Configure Mappings** to choose which pitch classes (C..B) activate track selection vs method triggers.
 

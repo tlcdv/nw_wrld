@@ -27,12 +27,14 @@ export const HELP_TEXT = {
     "Choose how the app receives triggers: MIDI (hardware/IAC Driver), OSC (network messages from TouchOSC, Max/MSP, etc.).",
   midiChannels:
     "MIDI message channels used for external triggers. Track Select chooses which MIDI channel activates tracks; Triggers chooses which MIDI channel fires channel slots on the active track.",
+  midiNoteMatchMode:
+    "Controls how nw_wrld matches MIDI notes to your mappings. Pitch Class: any octave of C..B triggers the same mapping. Exact Note: match full MIDI note numbers (0–127), enabling octave-specific triggers.",
   trackTrigger:
-    "The identifier that activates this track. For MIDI: use pitch classes (C, F#, etc.) or numbers (0-11). For OSC: use /track/name pattern (e.g., /track/intro).",
+    "The identifier that activates this track. For MIDI: Pitch Class mode uses C..B or 0–11; Exact Note mode uses 0–127. For OSC: use /track/name pattern (e.g., /track/intro).",
   trackSlot:
     "Choose a track number. The actual trigger is defined in Settings → Configure Mappings. This allows you to quickly change all your MIDI/OSC mappings globally.",
   addChannel:
-    "Add a channel to trigger methods on this track's modules. For MIDI: use pitch classes (C..B). For OSC: use /ch/name or /channel/name pattern (e.g., /ch/bass).",
+    "Add a channel to trigger methods on this track's modules. For MIDI: Pitch Class mode uses C..B; Exact Note mode uses 0–127. For OSC: use /ch/name or /channel/name pattern (e.g., /ch/bass).",
   channelSlot:
     "Choose a channel number (1-12). The actual trigger is defined in Settings → Configure Mappings. This allows consistent channel mapping across all tracks.",
   velocitySensitive:

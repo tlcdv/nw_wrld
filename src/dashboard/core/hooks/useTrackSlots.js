@@ -1,11 +1,16 @@
 import { useMemo, useCallback } from "react";
 
-export const useTrackSlots = (tracks, globalMappings, inputType, excludeTrackId = null) => {
+export const useTrackSlots = (
+  tracks,
+  globalMappings,
+  inputType,
+  excludeTrackId = null
+) => {
   const usedSlots = useMemo(() => {
     return new Set(
       tracks
-        .filter(t => !excludeTrackId || t.id !== excludeTrackId)
-        .map(t => t.trackSlot)
+        .filter((t) => !excludeTrackId || t.id !== excludeTrackId)
+        .map((t) => t.trackSlot)
         .filter(Boolean)
     );
   }, [tracks, excludeTrackId]);
@@ -21,13 +26,35 @@ export const useTrackSlots = (tracks, globalMappings, inputType, excludeTrackId 
     return slots;
   }, [usedSlots, inputType]);
 
-  const getTrigger = useCallback((slot) => {
-    return globalMappings?.trackMappings?.[inputType]?.[slot] ?? "";
-  }, [globalMappings, inputType]);
+  const getTrigger = useCallback(
+    (slot) => {
+      if (!slot) return "";
+      if (inputType === "midi") {
+        const mode =
+          globalMappings?.input?.noteMatchMode === "exactNote"
+            ? "exactNote"
+            : "pitchClass";
+        const midiMappings = globalMappings?.trackMappings?.midi;
+        const byMode = midiMappings?.[mode];
+        if (byMode && typeof byMode === "object") {
+          return byMode?.[slot] ?? "";
+        }
+        if (midiMappings && typeof midiMappings === "object") {
+          return midiMappings?.[slot] ?? "";
+        }
+        return "";
+      }
+      return globalMappings?.trackMappings?.[inputType]?.[slot] ?? "";
+    },
+    [globalMappings, inputType]
+  );
 
-  const isSlotAvailable = useCallback((slot) => {
-    return availableSlots.includes(slot);
-  }, [availableSlots]);
+  const isSlotAvailable = useCallback(
+    (slot) => {
+      return availableSlots.includes(slot);
+    },
+    [availableSlots]
+  );
 
   return {
     usedSlots,
@@ -36,4 +63,3 @@ export const useTrackSlots = (tracks, globalMappings, inputType, excludeTrackId 
     isSlotAvailable,
   };
 };
-

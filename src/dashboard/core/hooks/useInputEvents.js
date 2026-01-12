@@ -4,8 +4,9 @@ import {
   setRecordingForTrack,
 } from "../../../shared/json/recordingUtils.js";
 import {
-  noteNumberToPitchClass,
-  parsePitchClass,
+  normalizeNoteMatchMode,
+  noteNumberToTriggerKey,
+  parseMidiTriggerValue,
   pitchClassToName,
   resolveChannelTrigger,
 } from "../../../shared/midi/midiUtils.js";
@@ -98,16 +99,30 @@ export const useInputEvents = ({
     let log = `[${timeStr}] ${sourceLabel} ${eventTypeLabel}\n`;
 
     if (source === "midi") {
-      const pc = noteNumberToPitchClass(data.note);
-      const pcName = pc !== null ? pitchClassToName(pc) : null;
+      const noteMatchMode = normalizeNoteMatchMode(
+        userDataRef.current?.config?.input?.noteMatchMode
+      );
+      const key = noteNumberToTriggerKey(data.note, noteMatchMode);
+      const pcName =
+        noteMatchMode === "pitchClass" && key !== null
+          ? pitchClassToName(key)
+          : null;
       if (type === "track-selection") {
         log += `  Note: ${data.note}${
-          pc !== null ? ` (pitchClass: ${pc} ${pcName || ""})` : ""
+          key !== null
+            ? noteMatchMode === "pitchClass"
+              ? ` (pitchClass: ${key} ${pcName || ""})`
+              : ` (note: ${key})`
+            : ""
         }\n`;
         log += `  Channel: ${data.channel || 1}\n`;
       } else {
         log += `  Note: ${data.note}${
-          pc !== null ? ` (pitchClass: ${pc} ${pcName || ""})` : ""
+          key !== null
+            ? noteMatchMode === "pitchClass"
+              ? ` (pitchClass: ${key} ${pcName || ""})`
+              : ` (note: ${key})`
+            : ""
         }\n`;
         log += `  Channel: ${data.channel}\n`;
       }
@@ -160,6 +175,9 @@ export const useInputEvents = ({
         userDataRef.current || {},
         activeSetIdRef.current
       );
+      const noteMatchMode = normalizeNoteMatchMode(
+        userDataRef.current?.config?.input?.noteMatchMode
+      );
       let trackName = null;
       let moduleInfo = null;
       let methodInfo = null;
@@ -170,9 +188,11 @@ export const useInputEvents = ({
           let resolvedTrackName = null;
 
           if (data.source === "midi") {
-            const pc = noteNumberToPitchClass(data.note);
+            const key = noteNumberToTriggerKey(data.note, noteMatchMode);
             resolvedTrackName =
-              pc !== null ? triggerMapsRef.current.trackTriggersMap[pc] : null;
+              key !== null
+                ? triggerMapsRef.current.trackTriggersMap[key]
+                : null;
           } else if (data.source === "osc") {
             resolvedTrackName =
               triggerMapsRef.current.trackTriggersMap[data.identifier];
@@ -237,8 +257,11 @@ export const useInputEvents = ({
             const currentInputType = globalMappings.input?.type || "midi";
 
             if (data.source === "midi") {
-              const triggerPc = noteNumberToPitchClass(data.note);
-              if (triggerPc === null) break;
+              const triggerKey = noteNumberToTriggerKey(
+                data.note,
+                noteMatchMode
+              );
+              if (triggerKey === null) break;
               Object.entries(activeTrack.channelMappings).forEach(
                 ([channelNumber, slotNumber]) => {
                   const resolvedTrigger = resolveChannelTrigger(
@@ -246,11 +269,11 @@ export const useInputEvents = ({
                     currentInputType,
                     globalMappings
                   );
-                  const resolvedPc =
-                    typeof resolvedTrigger === "number"
-                      ? resolvedTrigger
-                      : parsePitchClass(resolvedTrigger);
-                  if (resolvedPc === triggerPc) {
+                  const resolvedKey = parseMidiTriggerValue(
+                    resolvedTrigger,
+                    noteMatchMode
+                  );
+                  if (resolvedKey === triggerKey) {
                     channelsToFlash.push(channelNumber);
                   }
                 }

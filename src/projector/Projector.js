@@ -13,7 +13,8 @@ import {
 import { loadJsonFileSync } from "../shared/json/jsonFileBase.js";
 import {
   buildMidiConfig,
-  noteNumberToPitchClass,
+  normalizeNoteMatchMode,
+  noteNumberToTriggerKey,
   pitchClassToName,
 } from "../shared/midi/midiUtils.js";
 import { loadSettingsSync } from "../shared/json/configUtils.js";
@@ -516,12 +517,6 @@ const Projector = {
   },
 
   initInputListener() {
-    const midiConfig = buildMidiConfig(
-      this.userData,
-      this.config,
-      this.inputType
-    );
-
     const messaging = getMessaging();
     if (!messaging || typeof messaging.onInputEvent !== "function") return;
     messaging.onInputEvent((event, payload) => {
@@ -530,6 +525,11 @@ const Projector = {
 
       const isSequencerMode = this.config?.sequencerMode === true;
       const selectedInputType = this.config?.input?.type || "midi";
+      const midiConfig = buildMidiConfig(
+        this.userData,
+        this.config,
+        selectedInputType
+      );
       if (isSequencerMode) {
         return;
       }
@@ -544,15 +544,18 @@ const Projector = {
 
       let trackName = null;
       const timestamp = data.timestamp || performance.now() / 1000;
+      const noteMatchMode = normalizeNoteMatchMode(
+        this.config?.input?.noteMatchMode
+      );
 
       switch (type) {
         case "track-selection":
           if (debugEnabled) logger.log("🎯 [INPUT] Track selection event...");
 
           if (data.source === "midi") {
-            const pc = noteNumberToPitchClass(data.note);
+            const key = noteNumberToTriggerKey(data.note, noteMatchMode);
             const trackNameFromNote =
-              pc !== null ? midiConfig.trackTriggersMap[pc] : null;
+              key !== null ? midiConfig.trackTriggersMap[key] : null;
             if (debugEnabled) {
               logger.log(
                 `🎯 [INPUT] Note ${data.note} maps to track:`,
@@ -623,8 +626,8 @@ const Projector = {
             const trackMappings = midiConfig.channelMappings[activeTrackName];
 
             if (data.source === "midi") {
-              const pc = noteNumberToPitchClass(data.note);
-              const mappedChannels = pc !== null ? trackMappings[pc] : null;
+              const key = noteNumberToTriggerKey(data.note, noteMatchMode);
+              const mappedChannels = key !== null ? trackMappings[key] : null;
               if (mappedChannels) {
                 channelNames = Array.isArray(mappedChannels)
                   ? mappedChannels
@@ -692,10 +695,17 @@ const Projector = {
         const source = data.source === "midi" ? "MIDI" : "OSC";
         let log = `[${timeStr}] ${source} Event\n`;
         if (data.source === "midi") {
-          const pc = noteNumberToPitchClass(data.note);
-          const pcName = pc !== null ? pitchClassToName(pc) : null;
+          const key = noteNumberToTriggerKey(data.note, noteMatchMode);
+          const pcName =
+            noteMatchMode === "pitchClass" && key !== null
+              ? pitchClassToName(key)
+              : null;
           log += `  Note: ${data.note}${
-            pc !== null ? ` (pitchClass: ${pc} ${pcName || ""})` : ""
+            key !== null
+              ? noteMatchMode === "pitchClass"
+                ? ` (pitchClass: ${key} ${pcName || ""})`
+                : ` (note: ${key})`
+              : ""
           }\n`;
           log += `  Channel: ${data.channel}\n`;
         } else if (data.source === "osc") {

@@ -17,6 +17,7 @@ import { deleteRecordingsForTracks } from "../../shared/json/recordingUtils.js";
 import {
   parsePitchClass,
   pitchClassToName,
+  resolveTrackTrigger,
 } from "../../shared/midi/midiUtils.js";
 
 const SortableTrackItem = ({
@@ -54,18 +55,23 @@ const SortableTrackItem = ({
             }`}
           >
             {(() => {
-              const slot = track?.trackSlot;
-              const rawTrigger =
-                slot &&
-                globalMappings?.trackMappings?.[inputType]?.[slot] !== undefined
-                  ? globalMappings.trackMappings[inputType][slot]
-                  : "";
+              const rawTrigger = resolveTrackTrigger(
+                track,
+                inputType,
+                globalMappings
+              );
               const trigger =
                 inputType === "midi" &&
                 rawTrigger !== "" &&
                 rawTrigger !== null &&
                 rawTrigger !== undefined
                   ? (() => {
+                      const noteMatchMode =
+                        globalMappings?.input?.noteMatchMode === "exactNote"
+                          ? "exactNote"
+                          : "pitchClass";
+                      if (noteMatchMode === "exactNote")
+                        return String(rawTrigger);
                       const pc =
                         typeof rawTrigger === "number"
                           ? rawTrigger
@@ -204,7 +210,7 @@ export const SelectTrackModal = ({
           isOpen={true}
           onClose={() => setEditingTrackIndex(null)}
           trackIndex={editingTrackIndex}
-          inputConfig={userData.config?.inputConfig || {}}
+          inputConfig={userData.config?.input || {}}
         />
       )}
     </>
