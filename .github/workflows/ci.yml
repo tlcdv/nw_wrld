@@ -8,12 +8,6 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Block PRs to main branch
-        if: ${{ github.base_ref == 'main' }}
-        run: |
-          echo "PRs must target 'develop' (not 'main'). Please retarget the PR base branch."
-          exit 1
-
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
