@@ -67,10 +67,10 @@ class CloudPointIceberg extends BaseThreeJsModule {
       // Smoothly return scale to 1.0
       const currentScale = this.customGroup.scale.x;
       const targetScale = 1.0 + this.pulseAmount;
-      
+
       // Decay the pulse amount
       this.pulseAmount *= 0.9;
-      
+
       // Apply scale
       const newScale = THREE.MathUtils.lerp(currentScale, targetScale, 0.1);
       this.customGroup.scale.set(newScale, newScale, newScale);
@@ -78,8 +78,8 @@ class CloudPointIceberg extends BaseThreeJsModule {
   }
 
   pulse(options = {}) {
-     const { amount = 0.5 } = options;
-     this.pulseAmount = amount;
+    const { amount = 0.5 } = options;
+    this.pulseAmount = amount;
   }
 
   setRedMode() {
@@ -88,17 +88,17 @@ class CloudPointIceberg extends BaseThreeJsModule {
     const colorCount = colors.length / 3;
 
     for (let i = 0; i < colorCount; i++) {
-       const idx = i * 3;
-       // Deep reds with slight variation
-       colors[idx] = 0.8 + Math.random() * 0.2;     // R
-       colors[idx + 1] = 0.0 + Math.random() * 0.1; // G
-       colors[idx + 2] = 0.0 + Math.random() * 0.1; // B
+      const idx = i * 3;
+      // Deep reds with slight variation
+      colors[idx] = 0.8 + Math.random() * 0.2; // R
+      colors[idx + 1] = 0.0 + Math.random() * 0.1; // G
+      colors[idx + 2] = 0.0 + Math.random() * 0.1; // B
     }
     this.pointCloud.geometry.attributes.color.needsUpdate = true;
-    
+
     if (this.wireMesh && this.wireMesh.material) {
-        this.wireMesh.material.color.setHex(0xFF0000);
-        this.wireMesh.material.opacity = 0.3;
+      this.wireMesh.material.color.setHex(0xff0000);
+      this.wireMesh.material.opacity = 0.3;
     }
   }
 
@@ -108,18 +108,18 @@ class CloudPointIceberg extends BaseThreeJsModule {
     const colorCount = colors.length / 3;
 
     for (let i = 0; i < colorCount; i++) {
-       const idx = i * 3;
-       // White/Grey for LIDAR look
-       const val = 0.6 + Math.random() * 0.4;
-       colors[idx] = val;
-       colors[idx + 1] = val;
-       colors[idx + 2] = val;
+      const idx = i * 3;
+      // White/Grey for LIDAR look
+      const val = 0.6 + Math.random() * 0.4;
+      colors[idx] = val;
+      colors[idx + 1] = val;
+      colors[idx + 2] = val;
     }
     this.pointCloud.geometry.attributes.color.needsUpdate = true;
 
     if (this.wireMesh && this.wireMesh.material) {
-        this.wireMesh.material.color.setHex(0xFFFFFF);
-        this.wireMesh.material.opacity = 0.1;
+      this.wireMesh.material.color.setHex(0xffffff);
+      this.wireMesh.material.opacity = 0.1;
     }
   }
 
@@ -211,13 +211,7 @@ class CloudPointIceberg extends BaseThreeJsModule {
         carvedFactor = 0.3 + (carvedNoise + 0.3) * 0.7;
       }
 
-      return (
-        baseRadius *
-        irregularity *
-        (1 + protrusionStrength) *
-        elongationFactor *
-        carvedFactor
-      );
+      return baseRadius * irregularity * (1 + protrusionStrength) * elongationFactor * carvedFactor;
     };
 
     let vertexIdx = 0;
@@ -238,10 +232,7 @@ class CloudPointIceberg extends BaseThreeJsModule {
         const y = (normalizedY - 0.5) * 7;
 
         const verticalVariation =
-          this.noise.simplex2(
-            theta * 2.5 + noiseSeed,
-            normalizedY * 3.5 + noiseSeed
-          ) * 0.3;
+          this.noise.simplex2(theta * 2.5 + noiseSeed, normalizedY * 3.5 + noiseSeed) * 0.3;
         const finalY = y + verticalVariation;
 
         vertices[vertexIdx++] = x;
@@ -269,10 +260,7 @@ class CloudPointIceberg extends BaseThreeJsModule {
     }
 
     const wireGeometry = new THREE.BufferGeometry();
-    wireGeometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(vertices, 3)
-    );
+    wireGeometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
     wireGeometry.setIndex(wireIndices);
 
     const wireMaterial = new THREE.LineBasicMaterial({
@@ -285,4 +273,144 @@ class CloudPointIceberg extends BaseThreeJsModule {
     this.customGroup.add(this.wireMesh);
 
     const pointCount = 10000;
-    const redShellPointCount = Math.floor(pointCount 
+    const redShellPointCount = Math.floor(pointCount * 0.3);
+    const targetSurfaceThreshold = 0.92;
+    const estimatedAttempts = Math.ceil(
+      redShellPointCount / ((1 - targetSurfaceThreshold) * (1 - redShellThreshold) * 0.5)
+    );
+    const maxAttempts = Math.min(estimatedAttempts * 3, pointCount * 20);
+
+    const tempVec = new THREE.Vector3();
+    const tempDir = new THREE.Vector3();
+
+    let redPointsGenerated = 0;
+    let attempts = 0;
+
+    while (redPointsGenerated < redShellPointCount && attempts < maxAttempts) {
+      attempts++;
+
+      const u = Math.random();
+      const v = Math.random();
+      const w = Math.random();
+
+      const normalizedY = v;
+      const theta = u * Math.PI * 2;
+      const phi = Math.acos(1 - 2 * v);
+
+      const cosTheta = Math.cos(theta);
+      const sinTheta = Math.sin(theta);
+      const radius = getRadiusAtPoint(cosTheta, sinTheta, phi, normalizedY);
+
+      const sinPhi = Math.sin(phi);
+      const x = radius * sinPhi * cosTheta;
+      const z = radius * sinPhi * sinTheta;
+      const y = (normalizedY - 0.5) * 7;
+
+      const verticalVariation =
+        this.noise.simplex2(theta * 2.5 + noiseSeed, normalizedY * 3.5 + noiseSeed) * 0.3;
+      const finalY = y + verticalVariation;
+
+      tempVec.set(x, finalY, z);
+      const length = tempVec.length();
+      tempDir.set(x / length, finalY / length, z / length);
+      const dotProduct = tempDir.dot(redShellDirection);
+
+      const isRedShellRegion = dotProduct > redShellThreshold;
+      const isSurfacePoint = w > targetSurfaceThreshold;
+
+      if (isRedShellRegion && isSurfacePoint) {
+        const shellOffset = 0.06;
+        const shellX = x + tempDir.x * shellOffset;
+        const shellY = finalY + tempDir.y * shellOffset;
+        const shellZ = z + tempDir.z * shellOffset;
+
+        pointPositions.push(shellX, shellY, shellZ);
+
+        const redIntensity = 0.7 + Math.random() * 0.3;
+        pointColors.push(
+          0.8 + redIntensity * 0.2 + Math.random() * 0.2,
+          0.2 + Math.random() * 0.15,
+          0.2 + Math.random() * 0.15
+        );
+
+        redPointsGenerated++;
+      }
+    }
+
+    const pointGeometry = new THREE.BufferGeometry();
+    pointGeometry.setAttribute("position", new THREE.Float32BufferAttribute(pointPositions, 3));
+    pointGeometry.setAttribute("color", new THREE.Float32BufferAttribute(pointColors, 3));
+
+    const pointMaterial = new THREE.PointsMaterial({
+      size: 0.03,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      sizeAttenuation: true,
+    });
+
+    this.pointCloud = new THREE.Points(pointGeometry, pointMaterial);
+    this.customGroup.add(this.pointCloud);
+  }
+
+  randomizeColour() {
+    if (!this.pointCloud || !this.pointCloud.geometry) return;
+
+    const colors = this.pointCloud.geometry.attributes.color.array;
+    const colorCount = colors.length / 3;
+
+    let colorChoice;
+    do {
+      colorChoice = Math.floor(Math.random() * 3);
+    } while (colorChoice === this.lastColorChoice);
+
+    this.lastColorChoice = colorChoice;
+
+    for (let i = 0; i < colorCount; i++) {
+      const idx = i * 3;
+
+      if (colorChoice === 0) {
+        colors[idx] = 0.8 + Math.random() * 0.2;
+        colors[idx + 1] = 0.1 + Math.random() * 0.15;
+        colors[idx + 2] = 0.1 + Math.random() * 0.15;
+      } else if (colorChoice === 1) {
+        colors[idx] = 0.85 + Math.random() * 0.15;
+        colors[idx + 1] = 0.75 + Math.random() * 0.25;
+        colors[idx + 2] = 0.0 + Math.random() * 0.1;
+      } else {
+        colors[idx] = 0.6 + Math.random() * 0.2;
+        colors[idx + 1] = 0.1 + Math.random() * 0.15;
+        colors[idx + 2] = 0.7 + Math.random() * 0.3;
+      }
+    }
+
+    this.pointCloud.geometry.attributes.color.needsUpdate = true;
+  }
+
+  destroy() {
+    if (!this.renderer || !this.scene || !this.camera || this.destroyed) return;
+
+    if (this.wireMesh) {
+      if (this.wireMesh.geometry) this.wireMesh.geometry.dispose();
+      if (this.wireMesh.material) this.wireMesh.material.dispose();
+      this.customGroup.remove(this.wireMesh);
+      this.wireMesh = null;
+    }
+
+    if (this.pointCloud) {
+      if (this.pointCloud.geometry) this.pointCloud.geometry.dispose();
+      if (this.pointCloud.material) this.pointCloud.material.dispose();
+      this.customGroup.remove(this.pointCloud);
+      this.pointCloud = null;
+    }
+
+    if (this.customGroup) {
+      this.scene.remove(this.customGroup);
+      this.customGroup = null;
+    }
+
+    super.destroy();
+  }
+}
+
+export default CloudPointIceberg;
