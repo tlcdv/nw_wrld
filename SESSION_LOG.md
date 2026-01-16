@@ -10,9 +10,9 @@
 - **Execution:** Launched application via 'npm start'.
 - **Project Setup:** Created 'my_visuals' directory for the user project.
 - **UI Troubleshooting:** Analyzed user screenshots to clarify MIDI and Module setup steps.
+- **Configuration:** User successfully enabled 'External MIDI', created track 'MySong', and added 'CloudPointIceberg'.
 
 ### Next Steps
-- **User Action:** In Settings -> Select 'External MIDI'.
-- **User Action:** In Tracks -> Click '+ CREATE TRACK' (Bottom Right).
-- **User Action:** In Modules -> Click red '+' next to 'CLOUDPOINTICEBERG'.
-- **User Action:** Test DAW connection.
+- **Critical Fix:** User must select 'loopMIDI Port' in 'Settings -> MIDI Device'.
+- **Mapping:** User needs to click '+ CHANNEL' under 'CloudPointIceberg' to expose and map the new methods ('setRedMode', 'pulse').
+- **DAW:** Send MIDI Note 'E' to select the track, and other notes to trigger the mapped effects.
