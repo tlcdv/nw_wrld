@@ -14,8 +14,9 @@
   - `nw_wrld` reported `MIDI device "loopMIDI Port" not found`.
   - **Cause:** Likely driver contention between the test script and the main app, or startup order issues.
 - **Action:** Performed full restart of the application stack.
+- **Bridge Upgrade:** Created `src/test_bridge.js` ("The Hacker Way") to play audio and send MIDI triggers automatically, bypassing the need for a DAW.
 
 ### Next Steps
-1. **User Action:** In the restarted App -> **Settings** -> Ensure **"loopMIDI Port"** is selected (and no red error appears).
-2. **User Action:** Open Project `my_visuals`.
-3. **Verification:** I will run the test bridge *only* after the app is listening.
+1. **User Action:** Run the "Hacker Bridge" script: `node src/test_bridge.js`.
+2. **Observe:** Audio should play, and visuals should react.
+3. **Customize:** User can replace `kick.mp3` with their own file in `src/dashboard/assets/audio/` and update the BPM in the script.

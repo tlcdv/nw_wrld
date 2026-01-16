@@ -1,64 +1,73 @@
-const easymidi = require("easymidi");
+const easymidi = require('easymidi');
+const path = require('path');
+const { exec } = require('child_process');
 
-// List all outputs to help debug if it fails
+// --- CONFIGURATION ---
+const BPM = 120; // CHANGE THIS to match your song!
+const MP3_FILE = path.join(__dirname, 'dashboard', 'assets', 'audio', 'kick.mp3'); 
+// To use your own song: Replace 'kick.mp3' above with your filename, 
+// and make sure the file exists in src/dashboard/assets/audio/
+// ---------------------
+
+const BEAT_MS = 60000 / BPM;
+const targetPortName = 'loopMIDI Port';
+
+console.log(`\n🎵 THE HACKER BRIDGE 🎵`);
+console.log(`Target BPM: ${BPM}`);
+console.log(`Audio File: ${MP3_FILE}`);
+
+// 1. MIDI Setup
 const outputs = easymidi.getOutputs();
-console.log("Available MIDI Outputs:", outputs);
-
-const targetPortName = "loopMIDI Port";
-
-// Check if loopMIDI is available
 if (!outputs.includes(targetPortName)) {
-  console.error(`Error: Could not find "${targetPortName}". Please ensure loopMIDI is running.`);
-  process.exit(1);
+    console.error(`❌ Error: "${targetPortName}" not found. Is loopMIDI running?`);
+    process.exit(1);
 }
-
 const output = new easymidi.Output(targetPortName);
-console.log(`Connected to ${targetPortName}! Sending triggers...`);
-console.log("------------------------------------------------");
-console.log('Sending "Red Mode" (Note C) on Channel 1 every 2s');
-console.log('Sending "Pulse" (Note C#) on Channel 2 every 500ms');
-console.log("------------------------------------------------");
-console.log("Script will run for 60 seconds then exit.");
+console.log(`✅ Connected to MIDI: ${targetPortName}`);
 
-// Helper to send note
+// 2. Helper Functions
 function sendTrigger(channel, note, velocity = 127) {
-  // Note On
-  output.send("noteon", {
-    note: note,
-    velocity: velocity,
-    channel: channel,
-  });
-
-  // Note Off (shortly after)
-  setTimeout(() => {
-    output.send("noteoff", {
-      note: note,
-      velocity: velocity,
-      channel: channel,
-    });
-  }, 100);
+    output.send('noteon', { note: note, velocity: velocity, channel: channel });
+    setTimeout(() => {
+        output.send('noteoff', { note: note, velocity: velocity, channel: channel });
+    }, 100);
 }
 
-// Loop 1: Pulse (Channel 2 -> index 1) - Note C# (Index 13 or just name 'C#3')
-// easymidi accepts note names like 'C#3'
-let pulseCount = 0;
+// 3. Start The Show
+console.log('🚀 Launching Audio...');
+
+// Open the default media player for the file (Windows specific)
+// Using 'start' command to launch the file with the system's default player
+exec(`start "" "${MP3_FILE}"`, (error) => {
+    if (error) {
+        console.error(`⚠️ Could not play audio: ${error.message}`);
+        console.log('Continuing with MIDI only...');
+    }
+});
+
+console.log('🥁 Starting MIDI Loops...');
+
+// Loop 1: Pulse (Channel 2 / Index 1) - Note C# (C#3)
+// Beat: Every beat
+let beatCount = 0;
 const pulseInterval = setInterval(() => {
-  sendTrigger(1, "C#3"); // Channel 2 (index 1)
-  process.stdout.write("."); // visuals
-  pulseCount++;
-}, 500);
+    sendTrigger(1, 'C#3'); // Ch 2
+    process.stdout.write('Pwom '); 
+    beatCount++;
+}, BEAT_MS);
 
-// Loop 2: Red Mode (Channel 1 -> index 0) - Note C (Index 12 or 'C3')
+// Loop 2: Red Mode (Channel 1 / Index 0) - Note C (C3)
+// Bar: Every 4 beats (1 bar)
 const redInterval = setInterval(() => {
-  sendTrigger(0, "C3"); // Channel 1 (index 0)
-  console.log("\n[TRIGGER] RED MODE!");
-}, 2000);
+    sendTrigger(0, 'C3'); // Ch 1
+    console.log('\n🔴 FLASH!');
+}, BEAT_MS * 4);
 
-// Stop after 60 seconds
+// Stop after 3 minutes or Ctrl+C
 setTimeout(() => {
-  clearInterval(pulseInterval);
-  clearInterval(redInterval);
-  output.close();
-  console.log("\nDone! Test complete.");
-  process.exit(0);
-}, 60000);
+    clearInterval(pulseInterval);
+    clearInterval(redInterval);
+    output.close();
+    console.log('\n🏁 Show complete.');
+    process.exit(0);
+}, 180000); // 3 minutes
