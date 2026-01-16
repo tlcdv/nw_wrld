@@ -1709,14 +1709,23 @@
                 {
                   "name": "offset",
                   "options": [
-                    { "name": "x", "value": -25 },
-                    { "name": "y", "value": 0 }
+                    {
+                      "name": "x",
+                      "value": -25
+                    },
+                    {
+                      "name": "y",
+                      "value": 0
+                    }
                   ]
                 },
                 {
                   "name": "zoomLevel",
                   "options": [
-                    { "name": "zoomLevel", "value": 60 }
+                    {
+                      "name": "zoomLevel",
+                      "value": 60
+                    }
                   ]
                 }
               ],
@@ -1725,15 +1734,21 @@
                   {
                     "name": "pulseOpacity",
                     "options": [
-                      { "name": "amount", "value": 1 }
+                      {
+                        "name": "amount",
+                        "value": 1
+                      }
                     ]
                   }
                 ],
                 "2": [
-                   {
+                  {
                     "name": "pulse",
                     "options": [
-                      { "name": "amount", "value": 0.5 }
+                      {
+                        "name": "amount",
+                        "value": 0.5
+                      }
                     ]
                   }
                 ]
@@ -1741,6 +1756,12 @@
             },
             "inst_graph_1": {
               "constructor": [
+                {
+                  "name": "loadMeteors",
+                  "options": [
+                    { "name": "count", "value": 5 }
+                  ]
+                },
                 {
                   "name": "offset",
                   "options": [
@@ -1760,6 +1781,12 @@
             "inst_graph_2": {
               "constructor": [
                 {
+                  "name": "loadMeteors",
+                  "options": [
+                    { "name": "count", "value": 5 }
+                  ]
+                },
+                {
                   "name": "offset",
                   "options": [
                     { "name": "x", "value": 25 },
@@ -1777,6 +1804,12 @@
             },
             "inst_graph_3": {
               "constructor": [
+                {
+                  "name": "loadMeteors",
+                  "options": [
+                    { "name": "count", "value": 5 }
+                  ]
+                },
                 {
                   "name": "offset",
                   "options": [
@@ -1796,6 +1829,12 @@
             "inst_graph_4": {
               "constructor": [
                 {
+                  "name": "loadMeteors",
+                  "options": [
+                    { "name": "count", "value": 5 }
+                  ]
+                },
+                {
                   "name": "offset",
                   "options": [
                     { "name": "x", "value": 25 },
@@ -1806,6 +1845,101 @@
                   "name": "scale",
                   "options": [
                     { "name": "scale", "value": 0.8 }
+                  ]
+                }
+              ],
+              "methods": {}
+            }
+                  ]
+                },
+                {
+                  "name": "scale",
+                  "options": [
+                    {
+                      "name": "scale",
+                      "value": 0.8
+                    }
+                  ]
+                }
+              ],
+              "methods": {}
+            },
+            "inst_graph_2": {
+              "constructor": [
+                {
+                  "name": "offset",
+                  "options": [
+                    {
+                      "name": "x",
+                      "value": 25
+                    },
+                    {
+                      "name": "y",
+                      "value": -10
+                    }
+                  ]
+                },
+                {
+                  "name": "scale",
+                  "options": [
+                    {
+                      "name": "scale",
+                      "value": 0.8
+                    }
+                  ]
+                }
+              ],
+              "methods": {}
+            },
+            "inst_graph_3": {
+              "constructor": [
+                {
+                  "name": "offset",
+                  "options": [
+                    {
+                      "name": "x",
+                      "value": 25
+                    },
+                    {
+                      "name": "y",
+                      "value": 10
+                    }
+                  ]
+                },
+                {
+                  "name": "scale",
+                  "options": [
+                    {
+                      "name": "scale",
+                      "value": 0.8
+                    }
+                  ]
+                }
+              ],
+              "methods": {}
+            },
+            "inst_graph_4": {
+              "constructor": [
+                {
+                  "name": "offset",
+                  "options": [
+                    {
+                      "name": "x",
+                      "value": 25
+                    },
+                    {
+                      "name": "y",
+                      "value": 30
+                    }
+                  ]
+                },
+                {
+                  "name": "scale",
+                  "options": [
+                    {
+                      "name": "scale",
+                      "value": 0.8
+                    }
                   ]
                 }
               ],

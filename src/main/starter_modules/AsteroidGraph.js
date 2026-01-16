@@ -44,15 +44,16 @@ class AsteroidGraph extends ModuleBase {
     this.meteors = [];
     this.dataset = null;
     this.myp5 = null;
-    
-    // Requested Palette: Camel, Brown, White, Light Grey
+
+    // Requested Palette: Camel, Brown, White, Light Grey, Teal
     this.palette = [
-        [193, 154, 107], // Camel
-        [139, 69, 19],   // Brown
-        [255, 255, 255], // White
-        [211, 211, 211]  // Light Grey
+      [193, 154, 107], // Camel
+      [139, 69, 19], // Brown
+      [255, 255, 255], // White
+      [211, 211, 211], // Light Grey
+      [34, 75, 86], // #224b56 Teal
     ];
-    
+
     this.init();
   }
 
@@ -93,14 +94,11 @@ class AsteroidGraph extends ModuleBase {
           let peakY = centerY;
 
           // Reduced sampling step for performance with multiple graphs
-          for (let x = 0; x < p.width; x += 10) { 
+          for (let x = 0; x < p.width; x += 10) {
             let distortionMagnitude = meteor ? meteor.mass / 10 : 1;
             distortionMagnitude = Math.min(distortionMagnitude, maxDistortion);
 
-            let noiseVal = p.noise(
-              noiseOffsetX + x * 0.01,
-              noiseOffsetY + index
-            );
+            let noiseVal = p.noise(noiseOffsetX + x * 0.01, noiseOffsetY + index);
             let distortion = (noiseVal - 0.5) * 2 * distortionMagnitude;
 
             let y = centerY - distortion;
@@ -147,8 +145,7 @@ class AsteroidGraph extends ModuleBase {
 
     if (this.dataset && this.dataset.length > 0 && this.myp5) {
       for (let i = 0; i < safeCount; i++) {
-        const raw =
-          this.dataset[Math.floor(this.myp5.random(this.dataset.length))];
+        const raw = this.dataset[Math.floor(this.myp5.random(this.dataset.length))];
         const mass = Number(raw?.mass);
         const coords = raw?.geolocation?.coordinates;
         const lon = Number(coords?.[0]);

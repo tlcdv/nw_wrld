@@ -47,19 +47,19 @@ exec(`start "" "${MP3_FILE}"`, (error) => {
 
 console.log('🥁 Starting MIDI Loops...');
 
-// Loop 1: Pulse (Channel 2 / Index 1) - Note C# (C#3)
-// Beat: Every beat
+// Loop 1: Pulse (UI Channel 2 / Note C#)
+// MUST send on MIDI Channel 0 (which is Ch 1 in software)
 let beatCount = 0;
 const pulseInterval = setInterval(() => {
-    sendTrigger(1, 'C#3'); // Ch 2
+    sendTrigger(0, 'C#3'); // MIDI Ch 1, Note C#
     process.stdout.write('Pwom '); 
     beatCount++;
 }, BEAT_MS);
 
-// Loop 2: Red Mode (Channel 1 / Index 0) - Note C (C3)
-// Bar: Every 4 beats (1 bar)
+// Loop 2: Red Mode (UI Channel 1 / Note C)
+// MUST send on MIDI Channel 0 (which is Ch 1 in software)
 const redInterval = setInterval(() => {
-    sendTrigger(0, 'C3'); // Ch 1
+    sendTrigger(0, 'C3'); // MIDI Ch 1, Note C
     console.log('\n🔴 FLASH!');
 }, BEAT_MS * 4);
 
