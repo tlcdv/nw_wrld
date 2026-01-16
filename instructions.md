@@ -83,13 +83,26 @@ animate() {
 
 *Note: The repo uses specific binding methods for MIDI events, usually defined in the `static methods` block at the top of the class file.*
 
-### **Summary of Next Steps**
+---
 
-1. **Install the Repo:** `git clone` the repo and run `npm install`.
-2. **Prepare Audio:** Open your MP3 in a DAW and create a MIDI track that "plays along" with the beat.
-3. **Launch:** Run `npm start`, load the **`CloudPointIceberg`** module, and set it to listen to your DAW's MIDI channel.
+### **Part 4: Progress Tracker (Updated 2026-01-16)**
 
-If you are looking for a tutorial on how to set up the "Virtual MIDI" bridge (which is the hardest part), this video explains the concept clearly for Ableton users, which is what the creator uses.
+**Current Status:** "The Bridge" Construction Phase.
 
-[How to send MIDI from Ableton to other software](https://www.google.com/search?q=https://www.youtube.com/watch%3Fv%3DRaKDbvTEt6s)
-*This video is relevant because it solves the "Missing Link" between your MP3 file and the `nw_wrld` software, teaching you how to route the data necessary to drive the visuals.*
+**Completed:**
+- [x] Installed `nw_wrld` and dependencies.
+- [x] Installed `loopMIDI`.
+- [x] Created User Project (`my_visuals`).
+- [x] Modified `CloudPointIceberg` with custom visual modes (`setRedMode`, `setLidarMode`, `pulse`).
+- [x] Configured `nw_wrld` Settings to listen to `loopMIDI Port`.
+- [x] Created Track "MySong" and loaded `CloudPointIceberg`.
+- [x] Mapped `setRedMode` to MIDI Channel 1.
+
+**To Do (Immediate):**
+1. **Restart Computer** (to fix DAW launch issue).
+2. **Launch `nw_wrld`** (`npm start`).
+3. **Finish Mapping:** Map `pulse` method to **MIDI Channel 2**.
+4. **Set up DAW:**
+   - Create MIDI Track sending to `loopMIDI Port`.
+   - Send Note C (Ch 1) -> Triggers Red Mode.
+   - Send Note C# (Ch 2) -> Triggers Pulse.
