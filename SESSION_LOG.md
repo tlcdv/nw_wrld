@@ -3,20 +3,18 @@
 ## Date: 2026-01-16
 
 ### Accomplished
-- **Installation:** Successfully ran `npm install`.
-- **Git Config:** Set up `tlcdv`.
-- **Visuals:** Modified `CloudPointIceberg` (added red mode, pulse).
-- **Setup:** `my_visuals` project created.
-- **Mapping:** `setRedMode` (Ch 1) and `pulse` (Ch 2) mapped in UI.
-- **Bridge:** `loopMIDI` installed and active.
-- **Troubleshooting:**
-  - Reaper DAW failed to launch (driver conflict).
-  - `nw_wrld` reported `MIDI device "loopMIDI Port" not found`.
-  - **Cause:** Likely driver contention between the test script and the main app, or startup order issues.
-- **Action:** Performed full restart of the application stack.
-- **Bridge Upgrade:** Created `src/test_bridge.js` ("The Hacker Way") to play audio and send MIDI triggers automatically, bypassing the need for a DAW.
+- **Installation:** Successfully ran 'npm install'.
+- **Configuration:** 'loopMIDI' setup, 'nw_wrld' connected.
+- **Troubleshooting:** Created 'Hacker Bridge' script to fix audio playback.
+- **Styling:**
+  - **Removed Watermark:** Updated CSS to hide overlays.
+  - **Mechanical X-Ray:** Updated 'CloudPointIceberg' to generate a wireframe transmission engine (procedural).
+  - **Color Palette:** Updated 'AsteroidGraph' to use Camel/Brown/White/Grey.
+- **Deployment:** Pushed updates to both starter modules and the active user project ('my_visuals').
 
-### Next Steps
-1. **User Action:** Run the "Hacker Bridge" script: `node src/test_bridge.js`.
-2. **Observe:** Audio should play, and visuals should react.
-3. **Customize:** User can replace `kick.mp3` with their own file in `src/dashboard/assets/audio/` and update the BPM in the script.
+### Next Steps (User)
+1. **Reload App:** If open, press 'Ctrl+R' or 'View -> Reload' to see the new code logic.
+2. **Dashboard Setup:**
+   - **Left:** 'CloudPointIceberg' (X: -50). Map Ch 1 (Note C) to 'pulseOpacity'.
+   - **Right:** Add 4 'AsteroidGraph' modules (X: 50, Y: 10, 30, 50, 70).
+3. **Run Bridge:** 'node src/test_bridge.js'.

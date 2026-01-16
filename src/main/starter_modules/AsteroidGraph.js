@@ -44,6 +44,15 @@ class AsteroidGraph extends ModuleBase {
     this.meteors = [];
     this.dataset = null;
     this.myp5 = null;
+    
+    // Requested Palette: Camel, Brown, White, Light Grey
+    this.palette = [
+        [193, 154, 107], // Camel
+        [139, 69, 19],   // Brown
+        [255, 255, 255], // White
+        [211, 211, 211]  // Light Grey
+    ];
+    
     this.init();
   }
 
@@ -63,6 +72,7 @@ class AsteroidGraph extends ModuleBase {
 
         p.textSize(12);
         p.textAlign(p.CENTER, p.CENTER);
+        p.frameRate(30); // Optimize for multiple instances
       };
 
       p.draw = () => {
@@ -71,7 +81,10 @@ class AsteroidGraph extends ModuleBase {
         let maxDistortion = (p.height / 2) * 0.9;
 
         this.meteors.forEach((meteor, index) => {
-          p.stroke(255 - index * 50);
+          // Cycle through palette
+          const color = this.palette[index % this.palette.length];
+          p.stroke(color[0], color[1], color[2]);
+          p.strokeWeight(1.5);
           p.noFill();
           p.beginShape();
 
@@ -79,7 +92,8 @@ class AsteroidGraph extends ModuleBase {
           let peakX = 0;
           let peakY = centerY;
 
-          for (let x = 0; x < p.width; x += 5) {
+          // Reduced sampling step for performance with multiple graphs
+          for (let x = 0; x < p.width; x += 10) { 
             let distortionMagnitude = meteor ? meteor.mass / 10 : 1;
             distortionMagnitude = Math.min(distortionMagnitude, maxDistortion);
 
@@ -102,20 +116,21 @@ class AsteroidGraph extends ModuleBase {
 
           p.endShape();
 
+          // Optional: Draw text info
+          /*
           if (meteor.geolocation && meteor.geolocation.coordinates) {
-            p.fill(255 - index * 50);
+            p.fill(color[0], color[1], color[2]);
+            p.noStroke();
             p.text(
-              `${meteor.geolocation.coordinates[0].toFixed(
-                2
-              )}, ${meteor.geolocation.coordinates[1].toFixed(2)}`,
+              `${meteor.mass.toFixed(0)}`,
               peakX,
-              peakY - 15
+              peakY - 10
             );
-            p.noFill();
           }
+          */
         });
 
-        noiseOffsetX += 0.01;
+        noiseOffsetX += 0.02; // Faster movement
         noiseOffsetY += 0.01;
       };
     };
