@@ -99,23 +99,24 @@ class CloudPointIceberg extends BaseThreeJsModule {
     const coreGeometry = new THREE.TorusKnotGeometry(1.5, 0.4, 120, 20);
     const coreWire = new THREE.WireframeGeometry(coreGeometry);
     const coreMesh = new THREE.LineSegments(coreWire, material);
+    coreMesh.scale.set(1.5, 1.5, 1.5); // Make core bigger
     this.customGroup.add(coreMesh);
     this.parts.push(coreMesh);
 
     // 2. Surrounding Pistons/Cylinders (Cylinders)
     for (let i = 0; i < 6; i++) {
-      const cylinderGeo = new THREE.CylinderGeometry(0.2, 0.2, 4, 12);
-      const cylWire = new THREE.WireframeGeometry(cylinderGeo);
-      const cylMesh = new THREE.LineSegments(cylWire, material.clone()); // Clone for independent opacity
-
-      const angle = (i / 6) * Math.PI * 2;
-      const radius = 2.5;
-      cylMesh.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
-      cylMesh.rotation.x = Math.PI / 2; // Horizontal
-      cylMesh.lookAt(0, 0, 0); // Point inward
-
-      this.customGroup.add(cylMesh);
-      this.parts.push(cylMesh);
+        const cylinderGeo = new THREE.CylinderGeometry(0.3, 0.3, 6, 12); // Thicker, longer pistons
+        const cylWire = new THREE.WireframeGeometry(cylinderGeo);
+        const cylMesh = new THREE.LineSegments(cylWire, material.clone()); 
+        
+        const angle = (i / 6) * Math.PI * 2;
+        const radius = 3.5; // Wider radius
+        cylMesh.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+        cylMesh.rotation.x = Math.PI / 2; // Horizontal
+        cylMesh.lookAt(0, 0, 0); // Point inward
+        
+        this.customGroup.add(cylMesh);
+        this.parts.push(cylMesh);
     }
 
     // 3. Point Cloud Dust (Simulating scan data)

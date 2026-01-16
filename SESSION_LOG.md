@@ -10,10 +10,13 @@
   - **Removed Watermark:** Updated CSS to hide overlays.
   - **Mechanical X-Ray:** Updated 'CloudPointIceberg' to generate a wireframe transmission engine (procedural).
   - **Color Palette:** Updated 'AsteroidGraph' to use Camel/Brown/White/Grey/Teal.
-  - **Background:** Updated CSS to use Teal (#224b56) with opacity to ensure visibility against the previous white screen.
-- **Audio:** Fixed 'test_bridge.js' to correctly point to 'first-test-audio-nw_visuals-1.MP3'.
-- **Deployment:** Pushed updates to starter modules and user project.
+  - **Background:** Updated CSS to use Teal (#224b56) with opacity.
+- **Code Fixes:**
+  - **AsteroidGraph Visibility:** Added '...ModuleBase.methods' to 'AsteroidGraph.js' so it properly inherits offset/scale capabilities. This was the reason graphs were invisible.
+  - **Engine Visibility:** Increased scale and thickness of the mechanical engine parts in 'CloudPointIceberg.js'.
+  - **Audio:** Fixed 'test_bridge.js' to point to 'first-test-audio-nw_visuals-1.MP3'.
 
 ### Next Steps (User)
-1. **Reload App:** Press 'Ctrl+R' to load the new Teal background and visual settings.
-2. **Run Bridge:** 'node src/test_bridge.js' (Check console: it should now say 'first-test-audio-nw_visuals-1.MP3').
+1. **Reload App:** Press 'Ctrl+R' to load the new module code.
+2. **Run Bridge:** 'node src/test_bridge.js'.
+3. **Verify:** You should now see the Engine (Left) and Graphs (Right) moving.
