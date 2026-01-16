@@ -9,8 +9,10 @@
 - **Module Development:** Modified 'src/main/starter_modules/CloudPointIceberg.js' (Repaired syntax error).
 - **Execution:** Launched application via 'npm start'.
 - **Project Setup:** Created 'my_visuals' directory for the user project.
+- **UI Troubleshooting:** Analyzed user screenshots to clarify MIDI and Module setup steps.
 
 ### Next Steps
-- **User Action:** Select 'my_visuals' folder in the app.
-- **User Action:** Configure MIDI Input to 'loopMIDI Port'.
-- **User Action:** Create Track -> Add Module (CloudPointIceberg).
+- **User Action:** In Settings -> Select 'External MIDI'.
+- **User Action:** In Tracks -> Click '+ CREATE TRACK' (Bottom Right).
+- **User Action:** In Modules -> Click red '+' next to 'CLOUDPOINTICEBERG'.
+- **User Action:** Test DAW connection.
