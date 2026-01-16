@@ -9,12 +9,11 @@
 - **Styling:**
   - **Removed Watermark:** Updated CSS to hide overlays.
   - **Mechanical X-Ray:** Updated 'CloudPointIceberg' to generate a wireframe transmission engine (procedural).
-  - **Color Palette:** Updated 'AsteroidGraph' to use Camel/Brown/White/Grey.
-- **Deployment:** Pushed updates to both starter modules and the active user project ('my_visuals').
+  - **Color Palette:** Updated 'AsteroidGraph' to use Camel/Brown/White/Grey/Teal.
+  - **Background:** Updated CSS to use Teal (#224b56) with opacity to ensure visibility against the previous white screen.
+- **Audio:** Fixed 'test_bridge.js' to correctly point to 'first-test-audio-nw_visuals-1.MP3'.
+- **Deployment:** Pushed updates to starter modules and user project.
 
 ### Next Steps (User)
-1. **Reload App:** If open, press 'Ctrl+R' or 'View -> Reload' to see the new code logic.
-2. **Dashboard Setup:**
-   - **Left:** 'CloudPointIceberg' (X: -50). Map Ch 1 (Note C) to 'pulseOpacity'.
-   - **Right:** Add 4 'AsteroidGraph' modules (X: 50, Y: 10, 30, 50, 70).
-3. **Run Bridge:** 'node src/test_bridge.js'.
+1. **Reload App:** Press 'Ctrl+R' to load the new Teal background and visual settings.
+2. **Run Bridge:** 'node src/test_bridge.js' (Check console: it should now say 'first-test-audio-nw_visuals-1.MP3').

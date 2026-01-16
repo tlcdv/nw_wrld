@@ -4,7 +4,7 @@ const { exec } = require('child_process');
 
 // --- CONFIGURATION ---
 const BPM = 120; // CHANGE THIS to match your song!
-const MP3_FILE = path.join(__dirname, 'dashboard', 'assets', 'audio', 'kick.mp3'); 
+const MP3_FILE = path.join(__dirname, 'dashboard', 'assets', 'audio', 'first-test-audio-nw_visuals-1.MP3'); 
 // To use your own song: Replace 'kick.mp3' above with your filename, 
 // and make sure the file exists in src/dashboard/assets/audio/
 // ---------------------

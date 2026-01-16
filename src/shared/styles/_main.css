@@ -64,7 +64,12 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: transparent !important;
+  background-color: rgba(34, 75, 86, 0.6) !important; /* Teal with 60% opacity */
+}
+
+body, html {
+  overflow: hidden;
+  background-color: #224b56 !important; /* Fallback solid teal */
 }
 
 body,
