@@ -11,8 +11,9 @@
 - **Project Setup:** Created 'my_visuals' directory for the user project.
 - **UI Troubleshooting:** Analyzed user screenshots to clarify MIDI and Module setup steps.
 - **Configuration:** User successfully enabled 'External MIDI', created track 'MySong', and added 'CloudPointIceberg'.
+- **Mapping:** User mapped 'setRedMode' to Channel 1.
 
 ### Next Steps
-- **Critical Fix:** User must select 'loopMIDI Port' in 'Settings -> MIDI Device'.
-- **Mapping:** User needs to click '+ CHANNEL' under 'CloudPointIceberg' to expose and map the new methods ('setRedMode', 'pulse').
-- **DAW:** Send MIDI Note 'E' to select the track, and other notes to trigger the mapped effects.
+- **Mapping Fix:** User needs to map 'pulse' to **Channel 2** (since Ch 1 is taken).
+- **Bridge Concept:** Explain that MP3 (Audio) cannot go directly to MIDI.
+- **Execution:** Guide user to use a DAW (Reaper/Waveform) to convert Audio Beats -> MIDI Notes.
